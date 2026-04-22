@@ -1,0 +1,756 @@
+CodeSage - Production-Grade Project Plan
+
+Version: 1.1
+Date: 2026-04-23
+Target build window: 15 days (MVP+)
+
+==================================================
+1. Product Goal
+==================================================
+
+CodeSage is a full-stack AI platform that analyzes source repositories and returns actionable code insights with streaming output. The system must support authenticated users, asynchronous processing, robust job tracking, and reliable result persistence.
+
+Primary objective:
+Deliver a portfolio/interview-ready distributed system that demonstrates backend architecture, AI engineering, queue design, and deployable DevOps practices.
+
+Non-goals for this phase:
+- Billing, organizations/teams, marketplace integrations
+- Full enterprise multi-tenancy
+- Multi-cloud production hardening
+
+==================================================
+2. System Scope and Core Capabilities
+==================================================
+
+Mandatory capabilities:
+- JWT authentication (register, login, protected APIs)
+- Repository ingestion for public and private GitHub URLs
+- Asynchronous analysis using BullMQ + Redis
+- Worker-based execution and retry management
+- AI microservice (FastAPI) with RAG pipeline
+- Streaming AI analysis back to frontend
+- Job lifecycle tracking: pending, running, completed, failed
+- Persistent storage for users, repositories, jobs, and analysis output
+- Containerized deployment with docker-compose
+- Logs, health checks, and baseline observability
+
+Recommended additions (within timeline):
+- Refresh token flow and token rotation
+- Idempotency key for analyze requests
+- Request correlation IDs for tracing across services
+- Circuit breaker and timeout policy for AI service calls
+- Basic metrics endpoint for queue depth and processing latency
+
+==================================================
+3. High-Level Architecture
+==================================================
+
+Flow:
+
+Frontend (React + Vite)
+  -> Backend API (Node.js + Express)
+  -> BullMQ Queue (Redis)
+  -> Worker Service (Node.js)
+  -> AI Service (FastAPI)
+  -> RAG Pipeline
+  -> LLM streaming response
+  -> Worker updates Backend persistence
+  -> Backend streams incremental/final output to Frontend
+
+Data stores:
+- MongoDB: users, repositories, jobs, analysis results
+- Redis: job queue, worker coordination, transient status cache
+- ChromaDB: embeddings + vector index for retrieval
+
+==================================================
+4. Service Responsibilities
+==================================================
+
+4.1 Frontend (React + Vite)
+- Auth pages and JWT session handling
+- Repository submission UI (URL + optional token reference)
+- Job list and status polling/streaming UI
+- Live analysis viewer (SSE stream rendering)
+- Error states, retries, and loading UX
+
+4.2 Backend API (Node.js + Express)
+- Auth endpoints and JWT verification
+- Repository CRUD and ownership checks
+- Analyze trigger endpoint to enqueue jobs
+- Job read APIs (status, events, final output)
+- SSE endpoint for analysis stream delivery
+- Persist final outputs and metadata in MongoDB
+
+4.3 Queue Layer (BullMQ + Redis)
+- Dedicated analysis queue
+- Retry/backoff policy
+- Dead letter handling for exhausted retries
+- Queue events for monitoring (active, completed, failed)
+
+4.4 Worker Service (Node.js)
+- Consume analysis jobs
+- Update job status transitions
+- Call AI service with trace metadata
+- Stream chunks from AI service and forward to backend stream channel
+- Store final artifacts and error details
+
+4.5 AI Service (FastAPI)
+- Accept analysis request payload (repo info + prompt/task)
+- Run RAG orchestration
+- Retrieve context and call LLM with streaming mode
+- Return incremental tokens/chunks and final summary payload
+
+==================================================
+5. RAG Pipeline Design (Practical, Non-Naive)
+==================================================
+
+Pipeline stages:
+1. Repository acquisition
+- Clone repo to isolated temp workspace
+- Support private repos via token-auth clone URL
+- Enforce repo size/file count limits to protect resources
+
+2. Parsing and indexing
+- Parse files by language (Tree-sitter where available)
+- Extract function/class/module-level segments
+- Preserve file path, symbol name, language, line span metadata
+
+3. Chunking strategy
+- Prefer semantic chunks (function/class blocks) over blind fixed-size
+- Fallback to adaptive token windows for unsupported languages
+- Keep overlap only where needed for continuity
+
+4. Embedding and storage
+- Generate embeddings using sentence-transformers
+- Store vectors and metadata in ChromaDB
+- Maintain repository namespace per job/repo to prevent collision
+
+5. Hybrid retrieval
+- Dense retrieval from vector store
+- Sparse retrieval via BM25 keyword index
+- Merge and rerank by weighted score
+
+6. Context expansion (optional but recommended)
+- Use lightweight dependency/call graph hops
+- Expand only top-k anchors to control token budget
+
+7. Prompt assembly and LLM streaming
+- Build prompt with repo metadata, top contexts, and analysis objective
+- Stream output tokens/chunks to consumer as they are produced
+- Capture final answer, confidence notes, and citations (file paths)
+
+==================================================
+6. API Surface (MVP)
+==================================================
+
+Auth:
+- POST /api/auth/register
+- POST /api/auth/login
+- POST /api/auth/refresh (recommended)
+
+Repositories:
+- POST /api/repos
+- GET /api/repos
+- GET /api/repos/:id
+- DELETE /api/repos/:id
+
+Jobs:
+- POST /api/jobs/analyze
+  Body: repoId, analysisType, optional question
+  Response: jobId, initialStatus
+- GET /api/jobs/:jobId
+- GET /api/jobs?repoId=...
+- GET /api/jobs/:jobId/stream (SSE)
+
+System:
+- GET /health
+- GET /ready
+- GET /metrics (optional)
+
+==================================================
+7. Data Model Blueprint
+==================================================
+
+User:
+- _id
+- email (unique)
+- passwordHash
+- createdAt, updatedAt
+
+Repository:
+- _id
+- ownerUserId
+- provider (github)
+- url
+- defaultBranch
+- visibilityHint (public/private)
+- credentialRef (encrypted token reference, never plaintext)
+- createdAt, updatedAt
+
+Job:
+- _id
+- ownerUserId
+- repoId
+- type (analysis mode)
+- status (pending/running/completed/failed)
+- attempts
+- queueJobId
+- startedAt, completedAt
+- errorCode, errorMessage
+- correlationId
+- createdAt, updatedAt
+
+AnalysisResult:
+- _id
+- jobId
+- repoId
+- summary
+- streamedTranscript (optional chunk archive)
+- findings (array)
+- citations (file path + snippet metadata)
+- modelInfo
+- tokenUsage
+- durationMs
+- createdAt
+
+==================================================
+8. Execution Flow (End-to-End)
+==================================================
+
+1. User authenticates and submits repository.
+2. Backend validates ownership/access and stores repo record.
+3. User starts analysis via jobs endpoint.
+4. Backend creates Job= pending, enqueues queue message, returns jobId.
+5. Worker picks job, marks running, calls AI service.
+6. AI service runs RAG pipeline and streams partial output.
+7. Worker forwards stream events (Redis pub/sub or direct backend callback).
+8. Backend SSE endpoint pushes updates to frontend viewer.
+9. On completion, worker persists final result and marks completed.
+10. On failure, worker records structured error and queue retry policy applies.
+
+==================================================
+9. Reliability and Fault Tolerance
+==================================================
+
+Queue settings:
+- attempts: 3
+- backoff: exponential (for example 10s, 30s, 90s)
+- removeOnComplete: configurable retention
+- removeOnFail: keep enough history for debugging
+
+Timeouts:
+- Backend request timeout for AI calls (worker side)
+- Clone timeout and max repo size constraints
+- LLM stream timeout with partial-result fallback
+
+Failure handling:
+- Distinguish transient vs terminal failures
+- Move terminal failures to failed state with actionable error codes
+- Preserve partial outputs when available
+
+Idempotency:
+- Support idempotency key on analyze endpoint to prevent duplicate jobs
+
+==================================================
+10. Security Baseline
+==================================================
+
+- JWT auth with short-lived access token and refresh token rotation
+- Password hashing with bcrypt
+- Input validation on every external endpoint (Joi/Zod)
+- Encrypt sensitive secrets at rest (credentialRef)
+- Never log access tokens or repository credentials
+- Strict CORS configuration per environment
+- Rate limit auth and analyze endpoints
+- Basic secret scanning guard for logs and stored outputs
+
+==================================================
+11. Observability and Ops
+==================================================
+
+Logging:
+- Structured JSON logs for all services
+- Required fields: timestamp, service, level, correlationId, jobId
+
+Health checks:
+- /health for liveness
+- /ready checks dependencies (Mongo, Redis, AI service)
+
+Metrics (recommended):
+- queue depth
+- job throughput
+- failure rate
+- average end-to-end duration
+
+Tracing (lightweight):
+- Propagate correlationId from API -> queue -> worker -> AI service
+
+==================================================
+12. Project Structure (Target)
+==================================================
+
+codesage/
+|
+|-- frontend/
+|   |-- src/
+|   |   |-- api/
+|   |   |   |-- auth.js
+|   |   |   `-- repo.js
+|   |   |
+|   |   |-- pages/
+|   |   |   |-- Login.jsx
+|   |   |   |-- Dashboard.jsx
+|   |   |   `-- RepoPage.jsx
+|   |   |
+|   |   |-- components/
+|   |   |   |-- Navbar.jsx
+|   |   |   |-- RepoCard.jsx
+|   |   |   |-- StreamingOutput.jsx
+|   |   |   `-- Loader.jsx
+|   |   |
+|   |   |-- context/
+|   |   |   `-- AuthContext.jsx
+|   |   |
+|   |   |-- hooks/
+|   |   |   `-- useStreaming.js
+|   |   |
+|   |   |-- utils/
+|   |   |   `-- helpers.js
+|   |   |
+|   |   |-- App.jsx
+|   |   `-- main.jsx
+|   |
+|   |-- public/
+|   |-- index.html
+|   `-- package.json
+|
+|-- backend/
+|   |-- src/
+|   |   |-- config/
+|   |   |   |-- db.js
+|   |   |   `-- redis.js
+|   |   |
+|   |   |-- modules/
+|   |   |   |-- auth/
+|   |   |   |   |-- auth.controller.js
+|   |   |   |   |-- auth.service.js
+|   |   |   |   |-- auth.routes.js
+|   |   |   |   `-- auth.model.js
+|   |   |   |
+|   |   |   |-- users/
+|   |   |   |   |-- user.model.js
+|   |   |   |   |-- user.service.js
+|   |   |   |   `-- user.controller.js
+|   |   |   |
+|   |   |   |-- repos/
+|   |   |   |   |-- repo.model.js
+|   |   |   |   |-- repo.service.js
+|   |   |   |   |-- repo.controller.js
+|   |   |   |   `-- repo.routes.js
+|   |   |   |
+|   |   |   |-- jobs/
+|   |   |   |   |-- job.model.js
+|   |   |   |   |-- job.service.js
+|   |   |   |   |-- job.controller.js
+|   |   |   |   `-- job.routes.js
+|   |   |   |
+|   |   |   `-- ai/
+|   |   |       |-- ai.controller.js
+|   |   |       |-- ai.service.js
+|   |   |       `-- ai.routes.js
+|   |   |
+|   |   |-- queue/
+|   |   |   |-- analysisQueue.js
+|   |   |   `-- connection.js
+|   |   |
+|   |   |-- middleware/
+|   |   |   |-- auth.js
+|   |   |   |-- rateLimit.js
+|   |   |   |-- errorHandler.js
+|   |   |   `-- logger.js
+|   |   |
+|   |   |-- utils/
+|   |   |   |-- generateToken.js
+|   |   |   |-- constants.js
+|   |   |   `-- validators.js
+|   |   |
+|   |   |-- app.js
+|   |   `-- server.js
+|   |
+|   |-- package.json
+|   `-- Dockerfile
+|
+|-- ai-service/
+|   |-- app/
+|   |   |-- main.py
+|   |   |
+|   |   |-- api/
+|   |   |   `-- routes.py
+|   |   |
+|   |   |-- rag/
+|   |   |   |-- parser/
+|   |   |   |   |-- tree_sitter_parser.py
+|   |   |   |   `-- repo_loader.py
+|   |   |   |
+|   |   |   |-- graph/
+|   |   |   |   |-- call_graph.py
+|   |   |   |   `-- dependency_graph.py
+|   |   |   |
+|   |   |   |-- embeddings/
+|   |   |   |   |-- embedder.py
+|   |   |   |   `-- vector_store.py
+|   |   |   |
+|   |   |   |-- retrieval/
+|   |   |   |   |-- hybrid_search.py
+|   |   |   |   `-- bm25.py
+|   |   |   |
+|   |   |   |-- pipeline/
+|   |   |   |   |-- pipeline.py
+|   |   |   |   `-- context_builder.py
+|   |   |   |
+|   |   |   `-- utils/
+|   |   |       `-- helpers.py
+|   |   |
+|   |   |-- llm/
+|   |   |   |-- client.py
+|   |   |   `-- streaming.py
+|   |   |
+|   |   `-- core/
+|   |       |-- config.py
+|   |       `-- logger.py
+|   |
+|   |-- requirements.txt
+|   `-- Dockerfile
+|
+|-- workers/
+|   |-- src/
+|   |   |-- jobs/
+|   |   |   `-- analyze.job.js
+|   |   |
+|   |   |-- processors/
+|   |   |   `-- analysis.processor.js
+|   |   |
+|   |   |-- queue/
+|   |   |   `-- connection.js
+|   |   |
+|   |   |-- services/
+|   |   |   `-- aiClient.js
+|   |   |
+|   |   |-- utils/
+|   |   |   `-- logger.js
+|   |   |
+|   |   `-- worker.js
+|   |
+|   |-- package.json
+|   `-- Dockerfile
+|
+|-- devops/
+|   |-- docker/
+|   |   |-- backend.Dockerfile
+|   |   |-- ai.Dockerfile
+|   |   `-- worker.Dockerfile
+|   |
+|   |-- nginx/
+|   |   `-- nginx.conf
+|   |
+|   `-- scripts/
+|       `-- deploy.sh
+|
+|-- observability/
+|   |-- prometheus.yml
+|   |-- grafana/
+|   |   `-- dashboards.json
+|   `-- loki/
+|
+|-- docs/
+|   |-- architecture.md
+|   `-- system-design.md
+|
+|-- scripts/
+|   `-- setup.sh
+|
+|-- docker-compose.yml
+|-- .env
+`-- README.md
+
+==================================================
+13. Day-by-Day Execution Plan (15 Days)
+==================================================
+
+DAY 1 - SETUP + BACKEND BASE
+- mkdir codesage; cd codesage
+- mkdir frontend backend ai-service workers devops
+- cd backend
+- npm init -y
+- npm install express cors dotenv mongoose morgan
+- create: src/app.js, src/server.js, src/config/db.js
+- setup .env (PORT, MONGO_URI, JWT_SECRET)
+- connect MongoDB
+- add GET /health route
+OUTPUT: backend running on :5000
+
+--------------------------------------------------
+
+DAY 2 - AUTH SYSTEM
+- npm install bcryptjs jsonwebtoken
+- create modules/auth:
+  - auth.model.js
+  - auth.controller.js
+  - auth.service.js
+  - auth.routes.js
+- create middleware/auth.js
+- create utils/generateToken.js
+- implement register, login, JWT middleware
+OUTPUT: user auth working
+
+--------------------------------------------------
+
+DAY 3 - REPO MODULE + FRONTEND
+- create modules/repos:
+  - repo.model.js
+  - repo.controller.js
+  - repo.service.js
+  - repo.routes.js
+- APIs: POST /repo, GET /repo
+- cd ../frontend
+- npm create vite@latest
+- npm install axios react-router-dom
+- create Login.jsx and Dashboard.jsx
+- connect login + repo APIs
+OUTPUT: UI login + repo management
+
+--------------------------------------------------
+
+DAY 4 - REDIS + QUEUE
+- cd ../backend
+- npm install bullmq ioredis
+- create src/queue/analysisQueue.js and src/queue/connection.js
+- create worker bootstrap: workers/src/worker.js
+- add job enqueue in /analyze API
+- return jobId in response
+OUTPUT: async job system working
+
+--------------------------------------------------
+
+DAY 5 - AI SERVICE (FASTAPI)
+- cd ../ai-service
+- pip install fastapi uvicorn
+- create app/main.py
+- implement POST /analyze endpoint
+- connect worker -> AI service via axios/http client
+OUTPUT: full pipeline connected
+
+--------------------------------------------------
+
+DAY 6 - RAG BASE
+- pip install sentence-transformers chromadb
+- create:
+  - rag/parser/repo_loader.py
+  - rag/parser/chunker.py
+  - rag/embeddings/embedder.py
+  - rag/embeddings/vector_store.py
+- pipeline: clone -> chunk -> embed -> store
+OUTPUT: embeddings stored
+
+--------------------------------------------------
+
+DAY 7 - RETRIEVAL + ANALYSIS
+- create:
+  - rag/retrieval/hybrid_search.py
+  - rag/retrieval/bm25.py
+  - rag/pipeline/context_builder.py
+- implement query -> retrieve -> expand context
+- return meaningful context chunks
+OUTPUT: AI returns relevant insights
+
+--------------------------------------------------
+
+DAY 8 - STREAMING + UI
+- FastAPI: add StreamingResponse for token/chunk output
+- frontend: add useStreaming.js and StreamingOutput.jsx
+- connect UI to backend stream endpoint
+OUTPUT: live AI response
+
+--------------------------------------------------
+
+DAY 9 - JOB TRACKING + RESULT STORAGE
+- create modules/jobs/job.model.js
+- store jobId, status, result
+- update worker to persist status transitions and final output
+- create API: GET /job/:id
+OUTPUT: persistent results + status tracking
+
+--------------------------------------------------
+
+DAY 10 - ERROR HANDLING + VALIDATION
+- npm install joi
+- add global error middleware
+- add input validation for auth and repo APIs
+- add worker-level try/catch + structured failure reason
+- standardize API error responses
+OUTPUT: stable APIs
+
+--------------------------------------------------
+
+DAY 11 - RETRIES + RESILIENCE
+- configure BullMQ attempts: 3
+- configure exponential backoff
+- handle worker transient vs terminal failures
+- add fallback behavior when AI service fails
+OUTPUT: fault-tolerant system
+
+--------------------------------------------------
+
+DAY 12 - GITHUB INTEGRATION
+- support public repos (direct clone)
+- support private repos (token-auth)
+- store githubToken as encrypted reference (optional)
+- pass credential reference to AI service for clone step
+OUTPUT: real-world repo handling
+
+--------------------------------------------------
+
+DAY 13 - LOGGING + OBSERVABILITY
+- npm install winston
+- add structured request and job logs
+- ensure /health endpoint exists for all services
+- optional: add Prometheus metrics endpoint
+OUTPUT: production monitoring ready
+
+--------------------------------------------------
+
+DAY 14 - DOCKER + DEPLOYMENT
+- create Dockerfile for backend, ai-service, workers
+- finalize docker-compose.yml
+- configure environment variables for containers
+- run docker-compose up
+OUTPUT: full system running in containers
+
+--------------------------------------------------
+
+DAY 15 - FINAL POLISH
+- frontend: repo status (pending/running/done), loaders, error UI
+- backend: consistent and clean API responses
+- docs: README.md, architecture.md, system-design.md
+OUTPUT: recruiter-ready project
+
+--------------------------------------------------
+
+==================================================
+14. Final System Snapshot
+==================================================
+
+FINAL SYSTEM:
+- Auth system
+- Repo management
+- Async queue + workers
+- AI microservice
+- Full RAG pipeline
+- Streaming UI
+- Job tracking + persistence
+- Retry + fault tolerance
+- GitHub integration
+- Logging + observability
+- Docker deployment
+
+--------------------------------------------------
+
+CORE FLOW:
+User -> Login -> Add Repo -> Click Analyze
+-> Backend -> Queue Job -> Worker
+-> AI Service (RAG)
+-> Store Result -> Stream Response
+-> UI displays + persists
+
+--------------------------------------------------
+
+RULES:
+- Build end-to-end daily
+- Do not over-optimize early
+- Always test full pipeline
+- Keep logs for everything
+
+==================================================
+15. Environment Variables (Minimum)
+==================================================
+
+Backend:
+- NODE_ENV
+- PORT
+- MONGO_URI
+- REDIS_URL
+- JWT_SECRET
+- JWT_REFRESH_SECRET
+- AI_SERVICE_URL
+
+Worker:
+- NODE_ENV
+- REDIS_URL
+- MONGO_URI
+- AI_SERVICE_URL
+- WORKER_CONCURRENCY
+
+AI Service:
+- PYTHONUNBUFFERED
+- LLM_API_KEY
+- EMBEDDING_MODEL
+- CHROMA_DIR
+- MAX_REPO_SIZE_MB
+- CLONE_TIMEOUT_SEC
+
+Frontend:
+- VITE_API_BASE_URL
+
+==================================================
+16. Quality Gates and Definition of Done
+==================================================
+
+Minimum acceptance criteria:
+- User can register, login, and access protected routes
+- User can submit GitHub repo URL and start analysis
+- Job transitions visible in UI and via API
+- Streaming output visible before completion
+- Final result persisted and retrievable after refresh
+- Failed jobs retry automatically and surface clear error reason
+- docker-compose up boots full stack successfully
+
+Testing baseline:
+- Backend unit tests for auth, repo validation, job state transitions
+- Integration test for analyze enqueue and completion path
+- AI service smoke test for parser/retrieval pipeline
+- Worker resilience test for retry behavior
+
+==================================================
+17. Risks and Mitigations
+==================================================
+
+Risk: Large repo processing latency
+Mitigation: file filters, size limits, incremental indexing, timeout guards
+
+Risk: Token/security leakage from private repo handling
+Mitigation: encrypted credential references, redacted logs, secret handling policy
+
+Risk: Inconsistent streaming behavior across services
+Mitigation: standardized event schema, heartbeat events, reconnect strategy
+
+Risk: RAG quality instability
+Mitigation: hybrid retrieval + reranking + evaluation samples on known repos
+
+==================================================
+18. Portfolio/Interview Positioning
+==================================================
+
+This implementation demonstrates:
+- Distributed systems design with microservices and asynchronous queues
+- Practical AI engineering with RAG and hybrid retrieval
+- Streaming architecture and job orchestration
+- Production-oriented reliability, observability, and deployment readiness
+
+The final output should include a short demo walkthrough:
+1. Login
+2. Submit repo URL
+3. Watch live analysis stream
+4. Inspect persisted result and citations
+5. Show logs/metrics and containerized deployment
+
+End of plan.
