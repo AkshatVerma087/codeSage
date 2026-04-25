@@ -9,6 +9,9 @@ app.use(express.urlencoded({ extended: true }));
 
 
 const authRoutes = require('./routes/auth.route');
+const repoRoutes = require('./routes/repo.route');
+
+
 
 app.use(cookieParser());
 
@@ -28,6 +31,7 @@ app.get('/health', ( req, res) => {
 
 
 app.use('/api/auth', authRoutes);
+app.use('/api/repos', repoRoutes);
 
 
 module.exports = app;
