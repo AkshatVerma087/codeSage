@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeSage — 15-Day Build Plan</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f12;
+    --bg2: #13161b;
+    --bg3: #1a1e25;
+    --bg4: #212630;
+    --border: #2a2f3a;
+    --border2: #353c4a;
+    --text: #e8eaf0;
+    --text2: #8b92a5;
+    --text3: #555e72;
+    --accent: #00d4aa;
+    --accent2: #00a884;
+    --blue: #4a9eff;
+    --amber: #f5a623;
+    --coral: #ff6b5b;
+    --purple: #9b7ff4;
+    --green: #52d68a;
+    --pink: #f472b6;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* GRID BACKGROUND */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,170,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,170,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 4rem; position: relative; z-index: 1; }
+
+  /* HEADER */
+  .header { margin-bottom: 2.5rem; }
+  .header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .logo-area { }
+  .logo-tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .logo-tag::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0,212,170,0.4); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(0,212,170,0); }
+  }
+  .title { font-size: 32px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+  .title span { color: var(--accent); }
+  .subtitle { font-size: 13px; color: var(--text2); margin-top: 4px; font-family: var(--mono); }
+
+  .stats-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .stat-pill {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .stat-pill .val { color: var(--text); font-weight: 600; }
+  .stat-pill.accent { border-color: rgba(0,212,170,0.3); }
+  .stat-pill.accent .val { color: var(--accent); }
+
+  /* GLOBAL PROGRESS */
+  .global-progress { margin-bottom: 2rem; }
+  .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .progress-title { font-size: 12px; font-family: var(--mono); color: var(--text3); letter-spacing: 1px; text-transform: uppercase; }
+  .progress-pct { font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 600; }
+  .progress-track {
+    height: 4px;
+    background: var(--bg4);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--blue));
+    border-radius: 2px;
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+    width: 0%;
+  }
+
+  /* PHASE TABS */
+  .phases { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 1.75rem; }
+  .phase-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .phase-btn:hover { border-color: var(--border2); color: var(--text2); background: var(--bg3); }
+  .phase-btn.active { background: var(--bg3); border-color: var(--accent); color: var(--accent); }
+
+  /* DAY CARDS */
+  .days { display: flex; flex-direction: column; gap: 8px; }
+
+  .day-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .day-card:hover { border-color: var(--border2); }
+  .day-card.open { border-color: var(--border2); }
+
+  .day-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .day-header:hover { background: var(--bg3); }
+
+  .day-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 3px;
+    min-width: 52px;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+  .day-title-text { font-size: 14px; font-weight: 600; color: var(--text); flex: 1; }
+  .day-phase { font-family: var(--mono); font-size: 10px; color: var(--text3); display: none; }
+  @media(min-width:600px) { .day-phase { display: block; } }
+
+  .day-progress-wrap { display: flex; align-items: center; gap: 10px; }
+  .day-mini-bar {
+    width: 48px; height: 3px;
+    background: var(--bg4);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .day-mini-fill { height: 100%; border-radius: 2px; transition: width 0.3s; background: var(--accent); }
+  .day-count { font-family: var(--mono); font-size: 11px; color: var(--text3); min-width: 36px; text-align: right; }
+
+  .chevron {
+    font-size: 10px;
+    color: var(--text3);
+    transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+    flex-shrink: 0;
+  }
+  .day-card.open .chevron { transform: rotate(90deg); color: var(--accent); }
+
+  .day-body {
+    display: none;
+    padding: 0 16px 16px;
+    border-top: 1px solid var(--border);
+    animation: slideDown 0.2s ease;
+  }
+  @keyframes slideDown { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+  .day-card.open .day-body { display: block; }
+
+  /* SECTIONS */
+  .section { margin-top: 14px; }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* TASK ITEMS */
+  .task {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 6px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.12s;
+    margin-bottom: 2px;
+  }
+  .task:hover { background: var(--bg3); }
+
+  .checkbox {
+    width: 16px; height: 16px;
+    min-width: 16px;
+    border-radius: 3px;
+    border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 2px;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .task:hover .checkbox { border-color: var(--accent); }
+  .checkbox.checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .checkbox.checked::after {
+    content: '';
+    display: block;
+    width: 9px; height: 6px;
+    border-left: 2px solid #0d0f12;
+    border-bottom: 2px solid #0d0f12;
+    transform: rotate(-45deg) translate(1px, -1px);
+  }
+
+  .task-text {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.55;
+    font-family: var(--sans);
+    font-weight: 400;
+  }
+  .task-text.checked { color: var(--text3); text-decoration: line-through; text-decoration-color: var(--border2); }
+
+  .code-ref {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--bg4);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: var(--blue);
+    margin: 0 2px;
+    white-space: nowrap;
+  }
+
+  .output-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 3px;
+    background: rgba(0,212,170,0.08);
+    border: 1px solid rgba(0,212,170,0.2);
+    color: var(--accent);
+    margin-left: 6px;
+    vertical-align: middle;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .output-tag::before { content: '✓'; font-size: 9px; }
+
+  /* DONE BANNER */
+  .done-banner {
+    display: none;
+    background: rgba(0,212,170,0.06);
+    border: 1px solid rgba(0,212,170,0.2);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-top: 12px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    text-align: center;
+  }
+
+  /* RESET */
+  .reset-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 5px 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-left: auto;
+  }
+  .reset-btn:hover { border-color: var(--coral); color: var(--coral); }
+
+  /* PHASE COLORS */
+  .phase-Foundation { background: rgba(74,158,255,0.12); color: #4a9eff; }
+  .phase-Core { background: rgba(0,212,170,0.1); color: #00d4aa; }
+  .phase-AI { background: rgba(255,107,91,0.1); color: #ff6b5b; }
+  .phase-Streaming { background: rgba(155,127,244,0.1); color: #9b7ff4; }
+  .phase-Reliability { background: rgba(245,166,35,0.1); color: #f5a623; }
+  .phase-Integrations { background: rgba(244,114,182,0.1); color: #f472b6; }
+  .phase-Ops { background: rgba(139,146,165,0.1); color: #8b92a5; }
+  .phase-Delivery { background: rgba(82,214,138,0.1); color: #52d68a; }
+
+  /* FOOTER */
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  }
+  .footer-text { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+
+  .note-bar {
+    background: rgba(245,166,35,0.06);
+    border: 1px solid rgba(245,166,35,0.15);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 1.5rem;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--amber);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .note-bar::before { content: '⚑'; font-size: 14px; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-top">
+      <div class="logo-area">
+        <div class="logo-tag">build tracker</div>
+        <div class="title">Code<span>Sage</span></div>
+        <div class="subtitle">// 15-day execution plan · auth already done</div>
+      </div>
+      <button class="reset-btn" onclick="resetAll()">reset progress</button>
+    </div>
+    <div class="stats-row">
+      <div class="stat-pill accent"><span class="val" id="pct-val">0%</span> complete</div>
+      <div class="stat-pill"><span class="val" id="done-val">0</span> / <span id="total-val">0</span> tasks</div>
+      <div class="stat-pill"><span class="val">15</span> days</div>
+      <div class="stat-pill"><span class="val">4</span> services</div>
+    </div>
+  </div>
+
+  <div class="global-progress">
+    <div class="progress-header">
+      <span class="progress-title">overall progress</span>
+      <span class="progress-pct" id="global-pct">0%</span>
+    </div>
+    <div class="progress-track"><div class="progress-bar" id="global-bar"></div></div>
+  </div>
+
+  <div class="note-bar">Auth (register / login / logout) already implemented. Day 2 focuses on refresh token flow and verification.</div>
+
+  <div class="phases" id="phase-tabs"></div>
+
+  <div class="days" id="days-container"></div>
+
+  <div class="footer">
+    <div class="footer-text">Progress saved in localStorage</div>
+    <div class="footer-text">CodeSage MVP+ · Node · FastAPI · BullMQ · RAG</div>
+  </div>
+</div>
+
+<script>
+const PHASE_MAP = {
+  "Foundation": "Foundation",
+  "Core Features": "Core",
+  "AI Layer": "AI",
+  "Streaming": "Streaming",
+  "Reliability": "Reliability",
+  "Integrations": "Integrations",
+  "Ops": "Ops",
+  "Delivery": "Delivery"
+};
+
+const DAYS = [
+{d:1,title:"Setup + Backend Base",phase:"Foundation",items:[
+  {s:"Project scaffold",tasks:[
+    "Create root folders: <code>frontend/</code> <code>backend/</code> <code>ai-service/</code> <code>workers/</code> <code>devops/</code>",
+    "Init backend: <code>npm init -y</code>",
+    "Install deps: <code>express cors dotenv mongoose morgan</code>",
+    "Create <code>.env</code> with PORT, MONGO_URI, JWT_SECRET"
+  ]},
+  {s:"Core files",tasks:[
+    "Create <code>src/app.js</code> — Express app setup, CORS, morgan middleware",
+    "Create <code>src/server.js</code> — listen on PORT, import app, start DB",
+    "Create <code>src/config/db.js</code> — mongoose connect helper with error handling",
+    "Wire <code>db.js</code> into <code>server.js</code> before app.listen"
+  ]},
+  {s:"Health route",tasks:[
+    "Add <code>GET /health</code> in <code>app.js</code> returning <code>{status:'ok', uptime, timestamp}</code>",
+    "Test: <code>curl http://localhost:5000/health</code>"
+  ]},
+  {s:"Output",tasks:["Backend running on :5000 with MongoDB connected|||output"]}
+]},
+{d:2,title:"Auth — Verify + Extend (refresh token)",phase:"Foundation",items:[
+  {s:"Verify existing auth",tasks:[
+    "Confirm <code>auth.model.js</code> has email, passwordHash, createdAt, updatedAt",
+    "Confirm <code>auth.routes.js</code> mounts at <code>/api/auth</code> in <code>app.js</code>",
+    "Confirm <code>middleware/auth.js</code> exports <code>verifyToken</code> JWT middleware",
+    "Confirm <code>utils/generateToken.js</code> issues short-lived access JWT"
+  ]},
+  {s:"Add refresh token flow",tasks:[
+    "Add <code>refreshToken</code> field to User model in <code>auth.model.js</code>",
+    "Update <code>utils/generateToken.js</code> — also generate refresh token with longer expiry",
+    "On login in <code>auth.controller.js</code> — save refreshToken hash to user doc",
+    "Create <code>POST /api/auth/refresh</code> in <code>auth.routes.js</code>",
+    "Implement refresh logic in <code>auth.controller.js</code> — verify refresh token, issue new access token"
+  ]},
+  {s:"Add logout",tasks:[
+    "Create <code>POST /api/auth/logout</code> in <code>auth.routes.js</code>",
+    "In <code>auth.controller.js</code> logout handler — clear refreshToken field from DB",
+    "Apply <code>verifyToken</code> middleware on logout route"
+  ]},
+  {s:"Output",tasks:["Full auth flow: register → login → refresh → logout|||output"]}
+]},
+{d:3,title:"Repo Module + Frontend Scaffold",phase:"Core Features",items:[
+  {s:"Backend — Repo module",tasks:[
+    "Create <code>modules/repos/repo.model.js</code> — _id, ownerUserId, provider, url, defaultBranch, visibilityHint, credentialRef, createdAt, updatedAt",
+    "Create <code>modules/repos/repo.controller.js</code> — createRepo, getRepos, getRepoById, deleteRepo (all logic here, no service file)",
+    "In <code>createRepo</code>: validate ownerUserId matches req.user, save and return repo doc",
+    "In <code>deleteRepo</code>: verify ownership before delete",
+    "Create <code>modules/repos/repo.routes.js</code> — POST, GET list, GET by id, DELETE — all protected by <code>verifyToken</code>",
+    "Mount repo routes in <code>app.js</code> at <code>/api/repos</code>"
+  ]},
+  {s:"Frontend scaffold",tasks:[
+    "cd frontend/ → <code>npm create vite@latest . -- --template react</code>",
+    "Install: <code>npm install axios react-router-dom</code>",
+    "Create <code>src/context/AuthContext.jsx</code> — store token, user, login/logout helpers, axios interceptor for Authorization header",
+    "Create <code>src/api/auth.js</code> — axios calls for login, register, refresh, logout",
+    "Create <code>src/api/repo.js</code> — axios calls for createRepo, getRepos, getRepoById, deleteRepo",
+    "Create <code>src/components/Navbar.jsx</code> — show user, logout button",
+    "Create <code>src/pages/Login.jsx</code> — form wired to <code>auth.js</code>",
+    "Create <code>src/pages/Dashboard.jsx</code> — list repos, add repo form",
+    "Wire protected routes in <code>App.jsx</code> using react-router-dom"
+  ]},
+  {s:"Output",tasks:["UI login + repo add/list working end-to-end|||output"]}
+]},
+{d:4,title:"Redis + BullMQ Queue Layer",phase:"Core Features",items:[
+  {s:"Backend queue setup",tasks:[
+    "In backend/: <code>npm install bullmq ioredis</code>",
+    "Create <code>src/queue/connection.js</code> — ioredis client from REDIS_URL env var",
+    "Create <code>src/queue/analysisQueue.js</code> — BullMQ Queue instance named 'analysis', export queue",
+    "Add <code>REDIS_URL</code> to backend <code>.env</code>"
+  ]},
+  {s:"Jobs module (partial — extended Day 9)",tasks:[
+    "Create <code>modules/jobs/job.model.js</code> — all fields: _id, ownerUserId, repoId, type, status, attempts, queueJobId, startedAt, completedAt, errorCode, errorMessage, correlationId, idempotencyKey, createdAt, updatedAt",
+    "Create <code>modules/jobs/job.controller.js</code> — triggerAnalysis: create Job(status=pending), enqueue to analysisQueue, return jobId",
+    "Create <code>modules/jobs/job.routes.js</code> — POST <code>/api/jobs/analyze</code> with <code>verifyToken</code>",
+    "Mount jobs routes in <code>app.js</code> at <code>/api/jobs</code>"
+  ]},
+  {s:"Worker bootstrap",tasks:[
+    "cd workers/ → <code>npm init -y</code>",
+    "Install: <code>npm install bullmq ioredis dotenv axios</code>",
+    "Create <code>src/queue/connection.js</code> — ioredis using REDIS_URL",
+    "Create <code>src/utils/logger.js</code> — structured JSON logger (timestamp, service, level, jobId, correlationId)",
+    "Create <code>src/worker.js</code> — BullMQ Worker on 'analysis' queue, import processor, log job received",
+    "Create <code>src/jobs/analyze.job.js</code> — job handler exporting process function",
+    "Create <code>src/processors/analysis.processor.js</code> — stub: log job data, return done",
+    "Add <code>REDIS_URL, MONGO_URI, AI_SERVICE_URL</code> to workers <code>.env</code>"
+  ]},
+  {s:"Output",tasks:["POST /api/jobs/analyze enqueues job, worker receives and logs it|||output"]}
+]},
+{d:5,title:"AI Service — FastAPI Base + Pipeline Connection",phase:"AI Layer",items:[
+  {s:"AI service setup",tasks:[
+    "cd ai-service/ → <code>python -m venv venv && source venv/bin/activate</code>",
+    "Install: <code>pip install fastapi uvicorn python-dotenv httpx</code>",
+    "Create <code>app/core/config.py</code> — pydantic settings loading LLM_API_KEY, EMBEDDING_MODEL, CHROMA_DIR, MAX_REPO_SIZE_MB, CLONE_TIMEOUT_SEC",
+    "Create <code>app/core/logger.py</code> — structured JSON logger",
+    "Create <code>app/main.py</code> — FastAPI app, include router, <code>GET /health</code> endpoint, CORS middleware"
+  ]},
+  {s:"Analyze endpoint (stub with streaming)",tasks:[
+    "Create <code>app/api/routes.py</code> — POST <code>/analyze</code> accepting repoUrl, repoId, analysisType, question, correlationId as Pydantic model",
+    "Return stub <code>StreamingResponse</code> yielding test chunks with 50ms delay",
+    "Create <code>app/rag/utils/helpers.py</code> — token counter, chunk dedup utilities",
+    "Create ai-service <code>.env</code> with all env vars, add to <code>.gitignore</code>"
+  ]},
+  {s:"Worker → AI service connection",tasks:[
+    "Create <code>src/services/aiClient.js</code> (workers/) — axios POST to AI_SERVICE_URL/analyze, responseType: 'stream'",
+    "Update <code>src/processors/analysis.processor.js</code> — call aiClient with job payload, log streaming chunks",
+    "Test full path: enqueue → worker calls AI → logs stub stream chunks"
+  ]},
+  {s:"Output",tasks:["Full pipeline connected: API → Queue → Worker → AI stub → streaming chunks logged|||output"]}
+]},
+{d:6,title:"RAG — Clone + Parse + Embed",phase:"AI Layer",items:[
+  {s:"Install RAG deps",tasks:[
+    "Install: <code>pip install sentence-transformers chromadb gitpython tree-sitter langchain rank-bm25</code>",
+    "Update <code>requirements.txt</code>"
+  ]},
+  {s:"Repo loader",tasks:[
+    "Create <code>app/rag/parser/repo_loader.py</code> — clone public repo to <code>/tmp/{jobId}/</code> via gitpython",
+    "Add MAX_REPO_SIZE_MB check before and after clone — raise ValueError if exceeded",
+    "Add CLONE_TIMEOUT_SEC enforcement — subprocess timeout on git clone",
+    "Support private repos: build clone URL with embedded token from payload",
+    "Add cleanup: delete /tmp/{jobId}/ after indexing"
+  ]},
+  {s:"Parser",tasks:[
+    "Create <code>app/rag/parser/tree_sitter_parser.py</code> — parse .py/.js/.ts files, extract function/class blocks with file_path, symbol_name, language, line_start, line_end, source_code",
+    "Add fallback adaptive token-window chunker for unsupported file types",
+    "Filter by extension: .py .js .ts .go .java .md (configurable in config.py)"
+  ]},
+  {s:"Embeddings + vector store",tasks:[
+    "Create <code>app/rag/embeddings/embedder.py</code> — SentenceTransformer wrapper, encode() returns numpy array",
+    "Create <code>app/rag/embeddings/vector_store.py</code> — ChromaDB client, collection per job/repo namespace, upsert chunks with metadata",
+    "Wire in <code>app/rag/pipeline/pipeline.py</code>: repo_loader → parser → embedder → vector_store as <code>run_indexing(repo_url, job_id)</code> function"
+  ]},
+  {s:"Output",tasks:["Embeddings stored in ChromaDB for a test public repo|||output"]}
+]},
+{d:7,title:"RAG — Retrieval + Context Builder",phase:"AI Layer",items:[
+  {s:"Hybrid retrieval",tasks:[
+    "Create <code>app/rag/retrieval/bm25.py</code> — BM25Okapi sparse index built from indexed chunk texts",
+    "Create <code>app/rag/retrieval/hybrid_search.py</code> — dense retrieval (ChromaDB cosine) + sparse (BM25), weighted merge score, return top-k chunks with scores"
+  ]},
+  {s:"Context expansion",tasks:[
+    "Create <code>app/rag/graph/dependency_graph.py</code> — parse import/require statements from AST to build file dependency edges",
+    "Create <code>app/rag/graph/call_graph.py</code> — function call edges from parsed AST",
+    "In hybrid_search: expand top-k anchors by 1 hop in dependency graph, add neighbors to context"
+  ]},
+  {s:"Pipeline + context builder",tasks:[
+    "Create <code>app/rag/pipeline/context_builder.py</code> — assemble final prompt: repo metadata header + retrieved chunks with file citations + analysis objective",
+    "Update <code>app/rag/pipeline/pipeline.py</code> — full flow: index → retrieve → expand → build_context → return prompt string",
+    "Update <code>app/api/routes.py</code> POST /analyze — call pipeline.run() to get real context"
+  ]},
+  {s:"LLM client",tasks:[
+    "Create <code>app/llm/client.py</code> — call LLM API (Anthropic/OpenAI) with assembled prompt, non-streaming for testing",
+    "Create <code>app/llm/streaming.py</code> — async generator yielding token chunks from LLM streaming API",
+    "Update <code>app/api/routes.py</code> — wire StreamingResponse to llm/streaming.py"
+  ]},
+  {s:"Output",tasks:["AI returns actual relevant code insights for a real repo query|||output"]}
+]},
+{d:8,title:"Streaming — AI → Worker → Frontend",phase:"Streaming",items:[
+  {s:"AI service — SSE streaming",tasks:[
+    "Update <code>app/llm/streaming.py</code> — async generator yields <code>data: {chunk, jobId}\\n\\n</code> SSE format",
+    "Update <code>app/api/routes.py</code> — StreamingResponse with media_type 'text/event-stream', propagate correlationId in headers"
+  ]},
+  {s:"Worker — stream forwarding via Redis pub/sub",tasks:[
+    "In backend/ <code>src/config/redis.js</code> — add pub/sub Redis client (separate connection from queue)",
+    "Update <code>src/services/aiClient.js</code> (workers/) — consume axios stream, parse SSE chunks",
+    "Update <code>src/processors/analysis.processor.js</code> — publish each chunk to Redis channel <code>job:{jobId}:stream</code>",
+    "On stream end: publish terminal event <code>{done: true}</code> to same channel"
+  ]},
+  {s:"Backend — SSE endpoint",tasks:[
+    "Add <code>streamJob</code> handler in <code>modules/jobs/job.controller.js</code>",
+    "Subscribe to Redis channel <code>job:{jobId}:stream</code>, forward each message as SSE to HTTP response",
+    "Set headers: Content-Type text/event-stream, Cache-Control no-cache, Connection keep-alive",
+    "On client disconnect: unsubscribe Redis channel, clean up",
+    "Add <code>GET /api/jobs/:jobId/stream</code> in <code>job.routes.js</code>"
+  ]},
+  {s:"Frontend — streaming UI",tasks:[
+    "Create <code>src/hooks/useStreaming.js</code> — EventSource hook, onmessage appends chunks, onerror handles reconnect, cleanup on unmount",
+    "Create <code>src/components/StreamingOutput.jsx</code> — render token stream with monospace font, auto-scroll to bottom",
+    "Create <code>src/components/Loader.jsx</code> — spinner + status text prop",
+    "Create <code>src/pages/RepoPage.jsx</code> — repo detail page, trigger analysis, show StreamingOutput and Loader",
+    "Link RepoCard → RepoPage in Dashboard.jsx"
+  ]},
+  {s:"Output",tasks:["Live AI tokens streaming in the browser from a real LLM|||output"]}
+]},
+{d:9,title:"Job Tracking + Result Persistence",phase:"Reliability",items:[
+  {s:"Job status transitions in worker",tasks:[
+    "In <code>src/processors/analysis.processor.js</code>: on job start — update MongoDB Job.status = 'running', set startedAt",
+    "On stream complete — update Job.status = 'completed', set completedAt, store AnalysisResult._id ref",
+    "On error — update Job.status = 'failed', save errorCode + errorMessage + attempts count",
+    "Save correlationId from job data to Job doc"
+  ]},
+  {s:"Analysis result storage",tasks:[
+    "Create <code>modules/jobs/analysisResult.model.js</code> — jobId, repoId, summary, streamedTranscript[], findings[], citations[{filePath, snippet}], modelInfo, tokenUsage, durationMs, createdAt",
+    "In processor on completion: create AnalysisResult doc with full output, link _id to Job doc"
+  ]},
+  {s:"Job read APIs",tasks:[
+    "Add <code>getJobById</code> in <code>modules/jobs/job.controller.js</code> — GET /api/jobs/:jobId, verify ownership",
+    "Add <code>getJobsByRepo</code> — GET /api/jobs?repoId=..., paginate with limit/skip",
+    "Mount both in <code>job.routes.js</code> with verifyToken",
+    "Add <code>getAnalysisResult</code> — GET /api/jobs/:jobId/result, return AnalysisResult doc"
+  ]},
+  {s:"Frontend persistence",tasks:[
+    "In <code>RepoPage.jsx</code>: after stream done, fetch final result via GET /api/jobs/:id/result and render findings + citations",
+    "Update <code>src/components/RepoCard.jsx</code> — show last job status badge (pending/running/completed/failed) with colors"
+  ]},
+  {s:"Output",tasks:["Job status + full result persisted and retrievable after page refresh|||output"]}
+]},
+{d:10,title:"Error Handling + Input Validation",phase:"Reliability",items:[
+  {s:"Backend validation",tasks:[
+    "In backend/: <code>npm install zod</code>",
+    "Create <code>src/utils/validators.js</code> — Zod schemas for register, login, createRepo (url, provider), analyzeJob (repoId, analysisType, question?)",
+    "Create validate middleware factory in <code>validators.js</code>: <code>(schema) => (req,res,next) => {...}</code>",
+    "Apply validators to auth routes, repo routes, jobs routes"
+  ]},
+  {s:"Global error middleware",tasks:[
+    "Create <code>class AppError extends Error</code> in <code>src/utils/constants.js</code> — statusCode, errorCode fields",
+    "Create <code>src/middleware/errorHandler.js</code> — Express catch-all, return <code>{success:false, error, message, code}</code>",
+    "Register in <code>app.js</code> as last middleware after all routes",
+    "Update all controllers to throw AppError instead of generic Error"
+  ]},
+  {s:"Worker error handling",tasks:[
+    "In <code>src/processors/analysis.processor.js</code>: try/catch wrapping entire processor",
+    "Define transient errors (network timeout, AI service 503) — rethrow so BullMQ retries",
+    "Define terminal errors (invalid repo, parse failure, 4xx from AI) — set job FAILED, do not rethrow"
+  ]},
+  {s:"AI service errors",tasks:[
+    "Add FastAPI exception handlers in <code>app/main.py</code> for RepoTooLargeError, CloneTimeoutError, LLMError",
+    "Return <code>{error: string, code: string, status: int}</code> JSON on all error paths",
+    "Ensure 4xx vs 5xx are used correctly (client vs server errors)"
+  ]},
+  {s:"Output",tasks:["All APIs return clean structured errors, worker failures are categorized|||output"]}
+]},
+{d:11,title:"Retries + Resilience",phase:"Reliability",items:[
+  {s:"BullMQ retry config",tasks:[
+    "Update <code>src/queue/analysisQueue.js</code> — defaultJobOptions: <code>{attempts:3, backoff:{type:'exponential',delay:10000}}</code>",
+    "Add <code>removeOnComplete: {count:50}</code>, <code>removeOnFail: {count:100}</code>",
+    "In <code>src/worker.js</code>: listen to 'failed' event — if job.attemptsMade >= 3, update Job.status = 'failed' with errorCode = 'MAX_RETRIES_EXCEEDED'"
+  ]},
+  {s:"Timeouts",tasks:[
+    "Add LLM stream timeout in <code>app/llm/streaming.py</code> — <code>asyncio.wait_for()</code> with CLONE_TIMEOUT_SEC",
+    "Add axios timeout in <code>src/services/aiClient.js</code> — configurable timeout ms via env var",
+    "In <code>app/rag/parser/repo_loader.py</code> — enforce clone timeout using subprocess with timeout param"
+  ]},
+  {s:"Circuit breaker (lightweight)",tasks:[
+    "In <code>src/services/aiClient.js</code> — track consecutive failures in module-level counter",
+    "If failures >= 3 in 60s window: log circuit OPEN, throw terminal error (don't retry AI call)",
+    "Reset counter on success or after 60s"
+  ]},
+  {s:"Idempotency",tasks:[
+    "Accept <code>idempotencyKey</code> in POST /api/jobs/analyze request body",
+    "In <code>job.controller.js</code> triggerAnalysis: check DB for existing Job with same repoId + idempotencyKey — return existing jobId if found (no duplicate)",
+    "Add <code>idempotencyKey</code> field + compound unique index on Job model"
+  ]},
+  {s:"Output",tasks:["System survives AI service outages and retries gracefully with backoff|||output"]}
+]},
+{d:12,title:"GitHub Integration",phase:"Integrations",items:[
+  {s:"Public repo clone",tasks:[
+    "In <code>app/rag/parser/repo_loader.py</code> — handle public GitHub URLs directly via gitpython Repo.clone_from",
+    "Filter cloned files by extension list from config",
+    "Enforce MAX_REPO_SIZE_MB: walk directory, sum file sizes, raise if exceeded",
+    "Cleanup /tmp/{jobId}/ in a finally block"
+  ]},
+  {s:"Private repo support",tasks:[
+    "Accept optional <code>githubToken</code> in POST /api/repos body",
+    "In <code>modules/repos/repo.controller.js</code> createRepo: encrypt token with AES-256 using Node <code>crypto</code> module, store as <code>credentialRef</code>",
+    "Never log raw githubToken anywhere",
+    "In <code>src/processors/analysis.processor.js</code> (workers/): decrypt credentialRef before passing to AI service payload",
+    "In <code>app/rag/parser/repo_loader.py</code>: inject token into clone URL: <code>https://x-token:{token}@github.com/...</code>"
+  ]},
+  {s:"Security hardening",tasks:[
+    "Create <code>src/utils/sanitize.js</code> (backend + workers) — strip tokens from any string before logging",
+    "Ensure AI service never logs clone URL with embedded token (redact in logger)",
+    "Add <code>.gitignore</code> entries for <code>.env</code> and <code>/tmp/</code> in all services"
+  ]},
+  {s:"Output",tasks:["Public and private GitHub repos clone, index, and analyze successfully|||output"]}
+]},
+{d:13,title:"Logging + Observability",phase:"Ops",items:[
+  {s:"Backend structured logging",tasks:[
+    "In backend/: <code>npm install winston</code>",
+    "Update <code>src/middleware/logger.js</code> — structured JSON request logger: timestamp, service, level, method, path, status, durationMs, correlationId",
+    "Create <code>src/utils/correlationId.js</code> — generate UUID v4, attach to req.correlationId, pass to queue job data",
+    "Register logger middleware in <code>app.js</code> before routes"
+  ]},
+  {s:"Worker logging",tasks:[
+    "Update <code>src/utils/logger.js</code> (workers/) — JSON format with jobId, correlationId, step, durationMs",
+    "Log all status transitions: pending→running, running→completed, running→failed",
+    "Log AI service call start, stream start, stream end with byte count"
+  ]},
+  {s:"Health + readiness",tasks:[
+    "Update <code>GET /health</code> in <code>app.js</code> — return {status, uptime, timestamp, version}",
+    "Add <code>GET /ready</code> in <code>app.js</code> — ping MongoDB with <code>db.admin().ping()</code> + ping Redis with <code>client.ping()</code>, return 503 if either fails",
+    "Add <code>GET /health</code> in ai-service <code>app/main.py</code>",
+    "Add readiness log on worker startup (log when queue connection established)"
+  ]},
+  {s:"Metrics endpoint",tasks:[
+    "In backend/: <code>npm install prom-client</code>",
+    "Create <code>src/utils/metrics.js</code> — Counter for job_total (by status), Histogram for job_duration_ms, Gauge for queue_depth",
+    "Instrument <code>job.controller.js</code> and processor to update metrics",
+    "Add <code>GET /metrics</code> in <code>app.js</code> — serve Prometheus text format"
+  ]},
+  {s:"Output",tasks:["Structured logs, /health, /ready, /metrics all working across services|||output"]}
+]},
+{d:14,title:"Docker + docker-compose",phase:"Ops",items:[
+  {s:"Dockerfiles",tasks:[
+    "Create <code>backend/Dockerfile</code> — node:20-alpine, WORKDIR /app, COPY package*.json, npm ci --production, COPY src/, EXPOSE 5000, CMD node src/server.js",
+    "Create <code>ai-service/Dockerfile</code> — python:3.11-slim, WORKDIR /app, COPY requirements.txt, pip install --no-cache-dir, COPY app/, EXPOSE 8000, CMD uvicorn app.main:app --host 0.0.0.0 --port 8000",
+    "Create <code>workers/Dockerfile</code> — node:20-alpine, WORKDIR /app, COPY package*.json, npm ci --production, COPY src/, CMD node src/worker.js",
+    "Add <code>.dockerignore</code> per service: node_modules, __pycache__, .env, venv, .git"
+  ]},
+  {s:"docker-compose.yml",tasks:[
+    "Add services: backend, ai-service, worker, mongo (mongo:7), redis (redis:7-alpine)",
+    "Set <code>depends_on</code>: backend depends on mongo + redis; worker depends on mongo + redis",
+    "Mount <code>.env</code> as <code>env_file</code> per service, use service names (not localhost) for internal URLs",
+    "Expose ports: backend:5000, ai-service:8000, mongo:27017, redis:6379",
+    "Add named volumes for mongo data and chroma data",
+    "Add healthchecks for mongo and redis containers"
+  ]},
+  {s:"Nginx reverse proxy",tasks:[
+    "Create <code>devops/nginx/nginx.conf</code> — upstream backend:5000, upstream ai:8000",
+    "Proxy <code>/api</code> → backend, <code>/ai</code> → ai-service, <code>/</code> → frontend build",
+    "Add nginx service in docker-compose.yml with port 80:80"
+  ]},
+  {s:"Test full stack",tasks:[
+    "<code>docker-compose up --build</code> — verify all 5 services start and pass healthchecks",
+    "Run full flow in browser: register → add repo → analyze → watch stream → check result",
+    "Fix any networking issues (use docker service names instead of localhost in all env vars)"
+  ]},
+  {s:"Output",tasks:["docker-compose up boots entire stack, full flow works in containers|||output"]}
+]},
+{d:15,title:"Final Polish + Docs",phase:"Delivery",items:[
+  {s:"Frontend polish",tasks:[
+    "Add job status badges in <code>RepoCard.jsx</code>: pending(amber), running(blue+pulse), completed(green), failed(red)",
+    "Add loading skeletons in <code>Dashboard.jsx</code> and <code>RepoPage.jsx</code> while data fetches",
+    "Add error banners for failed API calls with retry button",
+    "Add empty states: no repos added yet, no analysis run yet",
+    "In <code>useStreaming.js</code>: handle EventSource onerror with exponential backoff reconnect (max 3 attempts)"
+  ]},
+  {s:"Backend polish",tasks:[
+    "Audit all API responses — enforce consistent <code>{success, data, error, message}</code> envelope in all controllers",
+    "In backend/: <code>npm install express-rate-limit</code>",
+    "Create <code>src/middleware/rateLimit.js</code> — 10 req/min on /api/auth, 5 req/min on /api/jobs/analyze",
+    "Tighten CORS in <code>app.js</code> — allowlist frontend origin from env var",
+    "Edge case test: deleted repo, job for wrong user, invalid jobId, stream for completed job"
+  ]},
+  {s:"Documentation",tasks:[
+    "Write <code>README.md</code> — project overview, prerequisites (Node 20, Python 3.11, Docker), setup steps, env vars table, docker-compose up instructions",
+    "Write <code>docs/architecture.md</code> — service diagram description, data flow walkthrough, design decisions",
+    "Write <code>docs/system-design.md</code> — RAG pipeline stages, queue design rationale, streaming architecture, retry policy",
+    "Create <code>scripts/setup.sh</code> — copy .env.example, docker-compose up, open browser"
+  ]},
+  {s:"Demo prep",tasks:[
+    "Script demo: login → add public GitHub repo → click Analyze → watch live stream → inspect final result + citations",
+    "Add project to GitHub with clean commit history, meaningful commit messages",
+    "Note known limitations and future work section in README"
+  ]},
+  {s:"Output",tasks:["Recruiter-ready full-stack project with docs, clean UI, and working demo|||output"]}
+]}
+];
+
+const PHASES_ORDER = ["All","Foundation","Core Features","AI Layer","Streaming","Reliability","Integrations","Ops","Delivery"];
+const PHASE_CSS = {
+  "Foundation":"phase-Foundation","Core Features":"phase-Core","AI Layer":"phase-AI",
+  "Streaming":"phase-Streaming","Reliability":"phase-Reliability","Integrations":"phase-Integrations",
+  "Ops":"phase-Ops","Delivery":"phase-Delivery"
+};
+
+let state = {};
+try { state = JSON.parse(localStorage.getItem('cs15_v2') || '{}'); } catch(e){}
+let activePhase = "All";
+
+function save() { try { localStorage.setItem('cs15_v2', JSON.stringify(state)); } catch(e){} }
+
+function tid(d,si,ti) { return `d${d}s${si}t${ti}`; }
+
+function totalTasks(day) {
+  return day.items.reduce((a,s) => a + s.tasks.length, 0);
+}
+function doneTasks(day) {
+  return day.items.reduce((a,s,si) => a + s.tasks.filter((_,ti) => state[tid(day.d,si,ti)]).length, 0);
+}
+
+function allDoneTotal() {
+  return DAYS.reduce((a,d) => a + doneTasks(d), 0);
+}
+function allTotal() {
+  return DAYS.reduce((a,d) => a + totalTasks(d), 0);
+}
+
+function updateGlobal() {
+  const done = allDoneTotal(), total = allTotal();
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('global-bar').style.width = pct + '%';
+  document.getElementById('global-pct').textContent = pct + '%';
+  document.getElementById('pct-val').textContent = pct + '%';
+  document.getElementById('done-val').textContent = done;
+  document.getElementById('total-val').textContent = total;
+}
+
+function renderTabs() {
+  const bar = document.getElementById('phase-tabs');
+  bar.innerHTML = PHASES_ORDER.map(p =>
+    `<button class="phase-btn${p===activePhase?' active':''}" onclick="setPhase('${p}')">${p}</button>`
+  ).join('');
+}
+
+function setPhase(p) { activePhase = p; renderTabs(); renderDays(); }
+
+function parseTask(rawTask) {
+  const parts = rawTask.split('|||');
+  return { text: parts[0], isOutput: parts[1] === 'output' };
+}
+
+function renderDays() {
+  const container = document.getElementById('days-container');
+  const filtered = activePhase === 'All' ? DAYS : DAYS.filter(d => d.phase === activePhase);
+
+  container.innerHTML = filtered.map(day => {
+    const done = doneTasks(day), total = totalTasks(day);
+    const pct = total ? Math.round(done/total*100) : 0;
+    const isOpen = state[`open_${day.d}`];
+    const phaseClass = PHASE_CSS[day.phase] || '';
+    const allDone = done === total && total > 0;
+
+    return `
+      <div class="day-card${isOpen?' open':''}" id="card-${day.d}">
+        <div class="day-header" onclick="toggleDay(${day.d})">
+          <span class="day-num ${phaseClass}">DAY ${day.d}</span>
+          <span class="day-title-text">${day.title}</span>
+          <span class="day-phase">${day.phase}</span>
+          <div class="day-progress-wrap">
+            <div class="day-mini-bar">
+              <div class="day-mini-fill" style="width:${pct}%"></div>
+            </div>
+            <span class="day-count">${done}/${total}</span>
+          </div>
+          <span class="chevron">▶</span>
+        </div>
+        <div class="day-body">
+          ${day.items.map((sec, si) => `
+            <div class="section">
+              <div class="section-label">${sec.s}</div>
+              ${sec.tasks.map((rawTask, ti) => {
+                const {text, isOutput} = parseTask(rawTask);
+                const id = tid(day.d, si, ti);
+                const checked = !!state[id];
+                return `
+                  <div class="task" onclick="toggleTask('${id}')">
+                    <div class="checkbox${checked?' checked':''}"></div>
+                    <span class="task-text${checked?' checked':''}">
+                      ${text}${isOutput ? '<span class="output-tag">OUTPUT</span>' : ''}
+                    </span>
+                  </div>`;
+              }).join('')}
+            </div>
+          `).join('')}
+          ${allDone ? '<div class="done-banner" style="display:block">Day complete — ship it.</div>' : ''}
+        </div>
+      </div>`;
+  }).join('');
+
+  updateGlobal();
+}
+
+function toggleDay(d) {
+  state[`open_${d}`] = !state[`open_${d}`];
+  save(); renderDays();
+}
+
+function toggleTask(id) {
+  state[id] = !state[id];
+  save(); renderDays();
+}
+
+function resetAll() {
+  if (confirm('Reset all progress?')) {
+    state = {};
+    save(); renderDays();
+  }
+}
+
+// Replace <code> tags with styled spans for task text rendering
+// (HTML already inlined in task strings — browser renders them natively)
+
+renderTabs();
+renderDays();
+</script>
+</body>
+</html>
