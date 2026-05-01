@@ -1,6 +1,6 @@
-const {queue} = require('bullmq');
+const { Queue } = require('bullmq');
 const connection = require('./connection');
 
-const analysisQueue = new queue('analysis', {connection});
+const analysisQueue = new Queue('analysis', { connection });
 
 module.exports = analysisQueue;

@@ -10,6 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 
 const authRoutes = require('./routes/auth.route');
 const repoRoutes = require('./routes/repo.route');
+const jobRoutes = require('./routes/job.route');
 
 
 
@@ -32,6 +33,7 @@ app.get('/health', ( req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/repos', repoRoutes);
+app.use('/api/jobs', jobRoutes);
 
 
 module.exports = app;
