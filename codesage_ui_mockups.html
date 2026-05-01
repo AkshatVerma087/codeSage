@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeSage — Refined UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   TOKEN SYSTEM — DARK MODE (default)
+══════════════════════════════════════════ */
+:root {
+  /* Backgrounds — true black, layered neutrals */
+  --bg-base:    #000000;
+  --bg-raised:  #0c0c0c;
+  --bg-overlay: #141414;
+  --bg-subtle:  #1a1a1a;
+  --bg-muted:   #222222;
+
+  /* Borders — ultra-thin, barely there */
+  --border-dim:    rgba(255,255,255,0.05);
+  --border-base:   rgba(255,255,255,0.09);
+  --border-strong: rgba(255,255,255,0.15);
+
+  /* Text */
+  --text-primary:   #f0f0f0;
+  --text-secondary: #888888;
+  --text-tertiary:  #444444;
+  --text-disabled:  #333333;
+
+  /* Accent — single, used sparingly */
+  --accent:       #e8ff6b;
+  --accent-dim:   rgba(232,255,107,0.08);
+  --accent-hover: #d4eb50;
+
+  /* Status */
+  --status-success: #4ade80;
+  --status-warn:    #fb923c;
+  --status-error:   #f87171;
+  --status-info:    #60a5fa;
+  --status-running: #a78bfa;
+
+  /* Status dim backgrounds */
+  --success-bg: rgba(74,222,128,0.07);
+  --warn-bg:    rgba(251,146,60,0.07);
+  --error-bg:   rgba(248,113,113,0.07);
+  --info-bg:    rgba(96,165,250,0.07);
+  --running-bg: rgba(167,139,250,0.07);
+
+  /* Status borders */
+  --success-border: rgba(74,222,128,0.22);
+  --warn-border:    rgba(251,146,60,0.22);
+  --error-border:   rgba(248,113,113,0.22);
+  --info-border:    rgba(96,165,250,0.22);
+  --running-border: rgba(167,139,250,0.22);
+
+  /* Code syntax */
+  --syntax-kw:  #c084fc;
+  --syntax-fn:  #7dd3fc;
+  --syntax-str: #86efac;
+  --syntax-cmt: #525252;
+  --syntax-var: #fda4af;
+
+  /* Typography */
+  --font-sans: 'Geist', -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Transitions */
+  --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Shadows */
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.6);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.7);
+}
+
+/* ══════════════════════════════════════════
+   LIGHT MODE TOKENS
+══════════════════════════════════════════ */
+.light {
+  --bg-base:    #f5f5f4;
+  --bg-raised:  #ffffff;
+  --bg-overlay: #fafaf9;
+  --bg-subtle:  #f0f0ef;
+  --bg-muted:   #e8e8e7;
+
+  --border-dim:    rgba(0,0,0,0.05);
+  --border-base:   rgba(0,0,0,0.09);
+  --border-strong: rgba(0,0,0,0.16);
+
+  --text-primary:   #111111;
+  --text-secondary: #666666;
+  --text-tertiary:  #aaaaaa;
+  --text-disabled:  #cccccc;
+
+  --accent:       #1a1a1a;
+  --accent-dim:   rgba(0,0,0,0.06);
+  --accent-hover: #333333;
+
+  --status-success: #16a34a;
+  --status-warn:    #d97706;
+  --status-error:   #dc2626;
+  --status-info:    #2563eb;
+  --status-running: #7c3aed;
+
+  --success-bg: rgba(22,163,74,0.06);
+  --warn-bg:    rgba(217,119,6,0.06);
+  --error-bg:   rgba(220,38,38,0.06);
+  --info-bg:    rgba(37,99,235,0.06);
+  --running-bg: rgba(124,58,237,0.06);
+
+  --success-border: rgba(22,163,74,0.2);
+  --warn-border:    rgba(217,119,6,0.2);
+  --error-border:   rgba(220,38,38,0.2);
+  --info-border:    rgba(37,99,235,0.2);
+  --running-border: rgba(124,58,237,0.2);
+
+  --syntax-kw:  #7c3aed;
+  --syntax-fn:  #1d4ed8;
+  --syntax-str: #15803d;
+  --syntax-cmt: #9ca3af;
+  --syntax-var: #be123c;
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md:  0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg:  0 8px 32px rgba(0,0,0,0.1);
+}
+
+/* ══════════════════════════════════════════
+   RESET & BASE
+══════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ══════════════════════════════════════════
+   PAGE SWITCHER NAV (demo chrome)
+══════════════════════════════════════════ */
+.demo-nav {
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border-base);
+  padding: 0 16px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.demo-nav-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-right: 8px;
+  font-family: var(--font-mono);
+}
+.pg-btn {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  color: var(--text-tertiary);
+  background: transparent;
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition), border-color var(--transition);
+  letter-spacing: -0.1px;
+}
+.pg-btn:hover { color: var(--text-secondary); background: var(--bg-subtle); }
+.pg-btn.on {
+  background: var(--bg-subtle);
+  border-color: var(--border-base);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.demo-spacer { flex: 1; }
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid var(--border-base);
+  background: var(--bg-subtle);
+  transition: all var(--transition);
+  user-select: none;
+}
+.theme-toggle:hover { color: var(--text-secondary); border-color: var(--border-strong); }
+.theme-toggle svg { flex-shrink: 0; }
+
+/* ══════════════════════════════════════════
+   PAGE SYSTEM
+══════════════════════════════════════════ */
+.page { display: none; }
+.page.on { display: block; }
+
+/* ══════════════════════════════════════════
+   SHARED: NAVBAR
+══════════════════════════════════════════ */
+.navbar {
+  background: var(--bg-raised);
+  border-bottom: 1px solid var(--border-base);
+  padding: 0 20px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.logo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.6px;
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+.logo-dot { color: var(--accent); font-size: 18px; line-height: 1; }
+.nav-center {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  letter-spacing: -0.2px;
+}
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+/* ══════════════════════════════════════════
+   SHARED: BUTTONS
+══════════════════════════════════════════ */
+.btn {
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border: none;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all var(--transition);
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn-primary {
+  font-size: 13px;
+  padding: 7px 16px;
+  border-radius: 7px;
+  background: var(--accent);
+  color: #000000;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+.btn-primary:hover { background: var(--accent-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(232,255,107,0.2); }
+.btn-primary:active { transform: translateY(0); }
+
+.light .btn-primary { box-shadow: none; }
+.light .btn-primary:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+
+.btn-secondary {
+  font-size: 12px;
+  padding: 6px 13px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  color: var(--text-secondary);
+}
+.btn-secondary:hover { border-color: var(--border-strong); color: var(--text-primary); background: var(--bg-subtle); }
+
+.btn-ghost {
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-tertiary);
+}
+.btn-ghost:hover { color: var(--status-error); border-color: var(--error-border); background: var(--error-bg); }
+
+.btn-sm {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  background: transparent;
+  border: 1px solid var(--border-base);
+  color: var(--text-tertiary);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-weight: 400;
+}
+.btn-sm:hover { color: var(--text-secondary); border-color: var(--border-strong); background: var(--bg-subtle); }
+
+/* ══════════════════════════════════════════
+   SHARED: INPUTS
+══════════════════════════════════════════ */
+.input {
+  width: 100%;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-base);
+  border-radius: 7px;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  appearance: none;
+}
+.input::placeholder { color: var(--text-tertiary); }
+.input:focus {
+  border-color: var(--border-strong);
+  box-shadow: 0 0 0 3px var(--accent-dim);
+}
+.input-error { border-color: var(--error-border) !important; }
+.input-error:focus { box-shadow: 0 0 0 3px var(--error-bg); }
+
+.input-mono {
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.input-icon-wrap {
+  position: relative;
+}
+.input-icon-wrap .input { padding-left: 34px; }
+.input-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-tertiary);
+  pointer-events: none;
+}
+
+label.field-label {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: 0.1px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* ══════════════════════════════════════════
+   SHARED: CARDS
+══════════════════════════════════════════ */
+.card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 10px;
+}
+
+/* ══════════════════════════════════════════
+   SHARED: BADGES
+══════════════════════════════════════════ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 5px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  border: 1px solid transparent;
+}
+.badge-pending  { background: var(--warn-bg);    border-color: var(--warn-border);    color: var(--status-warn);    }
+.badge-running  { background: var(--running-bg); border-color: var(--running-border); color: var(--status-running); }
+.badge-done     { background: var(--success-bg); border-color: var(--success-border); color: var(--status-success); }
+.badge-fail     { background: var(--error-bg);   border-color: var(--error-border);   color: var(--status-error);   }
+
+.sev-critical { background: var(--error-bg);   border-color: var(--error-border);   color: var(--status-error);   }
+.sev-high     { background: var(--warn-bg);    border-color: var(--warn-border);    color: var(--status-warn);    }
+.sev-medium   { background: var(--info-bg);    border-color: var(--info-border);    color: var(--status-info);    }
+.sev-low      { background: var(--bg-muted);   border-color: var(--border-base);    color: var(--text-secondary); }
+
+.dot-pulse {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.35;transform:scale(.65)} }
+
+/* ══════════════════════════════════════════
+   SHARED: CODE BLOCK
+══════════════════════════════════════════ */
+.code-block {
+  background: var(--bg-base);
+  border: 1px solid var(--border-base);
+  border-radius: 8px;
+  padding: 14px 16px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.75;
+  color: var(--text-secondary);
+  overflow-x: auto;
+}
+.light .code-block { background: var(--bg-subtle); }
+.code-kw  { color: var(--syntax-kw); }
+.code-fn  { color: var(--syntax-fn); }
+.code-str { color: var(--syntax-str); }
+.code-cmt { color: var(--syntax-cmt); }
+.code-err { color: var(--status-error); }
+
+/* ══════════════════════════════════════════
+   SHARED: SECTION LABEL
+══════════════════════════════════════════ */
+.section-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  font-family: var(--font-mono);
+}
+
+/* ══════════════════════════════════════════
+   SHARED: DIVIDER
+══════════════════════════════════════════ */
+.divider { height: 1px; background: var(--border-dim); }
+
+/* ══════════════════════════════════════════
+   GRID BACKGROUND
+══════════════════════════════════════════ */
+.grid-bg {
+  background-image:
+    linear-gradient(var(--border-dim) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border-dim) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ══════════════════════════════════════════
+   TYPING CURSOR
+══════════════════════════════════════════ */
+.typing-cursor::after {
+  content: '▋';
+  animation: blink 1s step-end infinite;
+  color: var(--accent);
+  font-size: 11px;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ══════════════════════════════════════════
+   INLINE CODE CHIP
+══════════════════════════════════════════ */
+.code-chip {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-base);
+  padding: 1px 6px;
+  border-radius: 4px;
+  color: var(--syntax-fn);
+}
+
+/* ══════════════════════════════════════════
+   PAGE 1: LOGIN
+══════════════════════════════════════════ */
+.auth-page {
+  min-height: 620px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+.auth-box { width: 100%; max-width: 360px; }
+.auth-logo {
+  text-align: center;
+  margin-bottom: 36px;
+}
+.auth-logo-text {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -1.2px;
+  color: var(--text-primary);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.auth-logo-text .accent { color: var(--accent); }
+.auth-logo-sub {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.1px;
+}
+.auth-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 12px;
+  padding: 28px;
+}
+.auth-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 22px;
+  letter-spacing: -0.3px;
+}
+.field { margin-bottom: 14px; }
+.field:last-of-type { margin-bottom: 0; }
+.password-row {
+  position: relative;
+}
+.pw-show {
+  position: absolute;
+  right: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color var(--transition);
+}
+.pw-show:hover { color: var(--text-secondary); }
+.forgot-link {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: color var(--transition);
+  text-align: right;
+  display: block;
+  margin-top: 6px;
+}
+.forgot-link:hover { color: var(--text-primary); }
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+}
+.auth-divider-line { flex: 1; height: 1px; background: var(--border-base); }
+.auth-divider-text { font-size: 11px; color: var(--text-tertiary); letter-spacing: 0.2px; }
+.auth-footer-text {
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 16px;
+}
+.auth-footer-text .link {
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color var(--transition);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--border-strong);
+}
+.auth-footer-text .link:hover { color: var(--text-primary); }
+
+.github-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 7px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-strong);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-weight: 500;
+}
+.github-btn:hover { background: var(--bg-subtle); border-color: var(--border-strong); }
+
+.auth-footnote {
+  background: var(--bg-raised);
+  border-top: 1px solid var(--border-dim);
+  padding: 12px 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.auth-footnote-item {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.auth-footnote-item .dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ══════════════════════════════════════════
+   PAGE 3: DASHBOARD
+══════════════════════════════════════════ */
+.dash-body { background: var(--bg-base); min-height: 580px; }
+.dash-inner { padding: 24px 20px; }
+.dash-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.dash-heading {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  margin-bottom: 3px;
+}
+.dash-subheading { font-size: 12px; color: var(--text-tertiary); }
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.stat-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 9px;
+  padding: 14px 16px;
+}
+.stat-label {
+  font-size: 10px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  letter-spacing: 0.3px;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -1px;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.repo-list { display: flex; flex-direction: column; gap: 6px; }
+.repo-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 9px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  transition: border-color var(--transition-slow);
+}
+.repo-card:hover { border-color: var(--border-strong); }
+
+.repo-icon {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.repo-info { flex: 1; min-width: 120px; }
+.repo-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+  letter-spacing: -0.2px;
+}
+.repo-url {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+.repo-status { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.repo-time { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.repo-actions { display: flex; gap: 5px; flex-shrink: 0; }
+
+.add-panel {
+  margin-top: 16px;
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 10px;
+  padding: 20px;
+}
+.add-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  letter-spacing: -0.2px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.add-panel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.toggle {
+  width: 30px; height: 17px;
+  border-radius: 9px;
+  background: var(--accent);
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.toggle-thumb {
+  position: absolute;
+  right: 2px; top: 2px;
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: #000;
+}
+.light .toggle-thumb { background: #fff; }
+.toggle-label { font-size: 12px; color: var(--text-primary); }
+.toggle-note { font-size: 11px; color: var(--text-tertiary); margin-left: auto; }
+.add-panel-actions { display: flex; gap: 8px; }
+.add-panel-actions .btn-primary { flex: 1; justify-content: center; }
+
+/* ══════════════════════════════════════════
+   PAGE 4: ANALYSIS
+══════════════════════════════════════════ */
+.analysis-layout {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 20px;
+}
+.analysis-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  min-width: 160px;
+}
+.analysis-main { flex: 1; min-width: 220px; }
+
+.sidebar-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 10px;
+  padding: 16px;
+}
+.sidebar-section { margin-bottom: 16px; }
+.sidebar-section:last-child { margin-bottom: 0; }
+.sidebar-section-label {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-tertiary);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.sidebar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 3px 0;
+}
+.sidebar-key { font-size: 11px; color: var(--text-secondary); }
+.sidebar-val { font-size: 11px; color: var(--text-primary); font-family: var(--font-mono); font-weight: 500; }
+
+.lang-bar-row { margin-bottom: 7px; }
+.lang-bar-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.lang-bar-name { font-size: 11px; color: var(--text-secondary); }
+.lang-bar-pct { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.lang-bar-track {
+  height: 2px;
+  background: var(--bg-muted);
+  border-radius: 1px;
+  overflow: hidden;
+}
+.lang-bar-fill { height: 100%; border-radius: 1px; }
+
+.query-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 12px;
+}
+.query-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+  letter-spacing: -0.2px;
+}
+.query-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+.query-row select { flex: 1; min-width: 140px; cursor: pointer; }
+.query-row .btn-primary { flex-shrink: 0; }
+
+.output-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.output-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.output-title { font-size: 13px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.2px; }
+.output-time { font-size: 11px; color: var(--text-tertiary); font-family: var(--font-mono); }
+
+.output-body { font-size: 13px; color: var(--text-secondary); line-height: 1.8; margin-bottom: 14px; }
+
+.citations-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+.citations-card .section-label { margin-bottom: 10px; display: block; }
+.file-ref {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-dim);
+  border-radius: 6px;
+  margin-bottom: 5px;
+  transition: border-color var(--transition);
+}
+.file-ref:hover { border-color: var(--border-base); }
+.file-ref:last-child { margin-bottom: 0; }
+.file-ref-name { font-size: 11px; font-family: var(--font-mono); color: var(--text-primary); flex: 1; }
+.file-ref-lines { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); }
+
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  transition: background var(--transition);
+  cursor: pointer;
+}
+.history-row:hover { background: var(--bg-overlay); }
+.history-label { font-size: 12px; color: var(--text-secondary); flex: 1; }
+.history-time { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); }
+
+/* ══════════════════════════════════════════
+   PAGE 5: RESULT
+══════════════════════════════════════════ */
+.result-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.result-heading {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.6px;
+}
+.result-submeta {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-family: var(--font-mono);
+}
+.meta-sep { color: var(--border-strong); }
+.result-actions { display: flex; gap: 8px; }
+
+.score-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.score-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 9px;
+  padding: 14px 15px;
+}
+.score-label { font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.8px; font-family: var(--font-mono); margin-bottom: 6px; }
+.score-value { font-size: 22px; font-weight: 700; letter-spacing: -1px; line-height: 1; }
+
+.summary-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 10px;
+  padding: 18px;
+  margin-bottom: 12px;
+}
+.summary-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
+  margin-bottom: 10px;
+}
+.summary-body { font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+
+.finding {
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-dim);
+  border-radius: 8px;
+  padding: 13px 15px;
+  margin-bottom: 8px;
+  border-left: 2px solid transparent;
+  transition: border-color var(--transition-slow);
+}
+.finding:last-child { margin-bottom: 0; }
+.finding-critical { border-left-color: var(--status-error); }
+.finding-high     { border-left-color: var(--status-warn); }
+.finding-low      { border-left-color: var(--text-tertiary); }
+.finding-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.finding-title { font-size: 13px; color: var(--text-primary); font-weight: 500; letter-spacing: -0.2px; }
+.finding-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.65; margin-bottom: 6px; }
+.finding-loc { font-size: 10px; font-family: var(--font-mono); color: var(--text-tertiary); }
+
+.followup-card {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.followup-card .input { flex: 1; min-width: 200px; }
+
+/* ══════════════════════════════════════════
+   PAGE 6: DESIGN SYSTEM
+══════════════════════════════════════════ */
+.ds-body { padding: 24px 20px; background: var(--bg-base); min-height: 580px; }
+.ds-heading { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 20px; letter-spacing: -0.4px; }
+.ds-grid { display: flex; flex-wrap: wrap; gap: 24px; }
+.ds-col { min-width: 200px; flex: 1; }
+.ds-section-title { font-size: 9px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-mono); font-weight: 600; margin-bottom: 12px; display: block; }
+
+.color-swatch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+.swatch { width: 30px; height: 19px; border-radius: 5px; border: 1px solid var(--border-base); flex-shrink: 0; }
+.swatch-label { font-size: 11px; color: var(--text-secondary); font-family: var(--font-mono); }
+
+.type-scale > * { margin-bottom: 6px; }
+.t-display { font-size: 26px; font-weight: 700; letter-spacing: -1.2px; line-height: 1.1; }
+.t-h1 { font-size: 18px; font-weight: 600; letter-spacing: -0.5px; }
+.t-h2 { font-size: 15px; font-weight: 600; letter-spacing: -0.3px; }
+.t-body { font-size: 13px; color: var(--text-primary); }
+.t-secondary { font-size: 12px; color: var(--text-secondary); }
+.t-caption { font-size: 11px; color: var(--text-tertiary); }
+.t-label { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-mono); }
+.t-code { font-size: 12px; font-family: var(--font-mono); color: var(--syntax-fn); }
+
+.btn-showcase { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.badge-showcase { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+
+.toast {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-base);
+  border-radius: 8px;
+  padding: 10px 13px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+  box-shadow: var(--shadow-sm);
+}
+.toast-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.toast-msg { font-size: 12px; color: var(--text-primary); flex: 1; letter-spacing: -0.1px; }
+.toast-close { font-size: 14px; color: var(--text-tertiary); cursor: pointer; line-height: 1; }
+.toast-success { border-left: 2px solid var(--status-success); }
+.toast-error   { border-left: 2px solid var(--status-error); }
+.toast-warn    { border-left: 2px solid var(--status-warn); }
+
+.a11y-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  padding: 3px 0;
+}
+
+/* ══════════════════════════════════════════
+   UTILITIES
+══════════════════════════════════════════ */
+.mt-4  { margin-top: 4px; }
+.mt-6  { margin-top: 6px; }
+.mt-8  { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.mt-20 { margin-top: 20px; }
+.mb-6  { margin-bottom: 6px; }
+.mb-8  { margin-bottom: 8px; }
+.mb-10 { margin-bottom: 10px; }
+.mb-12 { margin-bottom: 12px; }
+.mb-14 { margin-bottom: 14px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-20 { margin-bottom: 20px; }
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.gap-4 { gap: 4px; }
+.gap-6 { gap: 6px; }
+.gap-8 { gap: 8px; }
+.gap-10 { gap: 10px; }
+.flex-1 { flex: 1; }
+.w-full { width: 100%; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
+
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════ DEMO CHROME ══════════════════════ -->
+<nav class="demo-nav">
+  <span class="demo-nav-label">Pages</span>
+  <button class="pg-btn on"      onclick="showPage('login')">Login</button>
+  <button class="pg-btn"         onclick="showPage('register')">Register</button>
+  <button class="pg-btn"         onclick="showPage('dashboard')">Dashboard</button>
+  <button class="pg-btn"         onclick="showPage('analysis')">Analysis</button>
+  <button class="pg-btn"         onclick="showPage('result')">Result</button>
+  <button class="pg-btn"         onclick="showPage('components')">Design system</button>
+  <div class="demo-spacer"></div>
+  <div class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+    Light mode
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 1: LOGIN
+══════════════════════════════════════════════════════════════ -->
+<div class="page on" id="page-login">
+  <div class="auth-page grid-bg">
+    <div class="auth-box">
+      <div class="auth-logo">
+        <div class="auth-logo-text">Code<span class="accent">Sage</span></div>
+        <div class="auth-logo-sub">AI-powered code analysis</div>
+      </div>
+      <div class="auth-card">
+        <div class="auth-title">Sign in to your account</div>
+
+        <div class="field">
+          <label class="field-label">Email address</label>
+          <div class="input-icon-wrap">
+            <svg class="input-icon" width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <rect x="1" y="3" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.2"/>
+              <path d="M1 5l7 5 7-5" stroke="currentColor" stroke-width="1.2"/>
+            </svg>
+            <input class="input" type="email" placeholder="you@example.com">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Password</label>
+          <div class="password-row">
+            <input class="input" type="password" placeholder="••••••••••" style="padding-right:44px">
+            <span class="pw-show">show</span>
+          </div>
+          <a class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button class="btn btn-primary w-full mt-20" style="justify-content:center">Sign in</button>
+        <div class="auth-divider">
+          <div class="auth-divider-line"></div>
+          <span class="auth-divider-text">or continue with</span>
+          <div class="auth-divider-line"></div>
+        </div>
+        <button class="github-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </button>
+        <div class="auth-footer-text">
+          Don't have an account? <span class="link">Register</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-footnote">
+    <div class="auth-footnote-item"><div class="dot" style="background:var(--status-success)"></div>WCAG AA contrast · min 8-char password</div>
+    <div class="auth-footnote-item"><div class="dot" style="background:var(--accent)"></div>Focus ring on inputs</div>
+    <div class="auth-footnote-item"><div class="dot" style="background:var(--status-info)"></div>Error state: border + inline message</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 2: REGISTER
+══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-register">
+  <div class="auth-page grid-bg">
+    <div class="auth-box" style="max-width:390px">
+      <div class="auth-logo">
+        <div class="auth-logo-text">Code<span class="accent">Sage</span></div>
+        <div class="auth-logo-sub">Create your account</div>
+      </div>
+      <div class="auth-card">
+        <div class="auth-title">Get started for free</div>
+
+        <div class="flex gap-10 mb-14">
+          <div class="flex-1">
+            <label class="field-label">First name</label>
+            <input class="input" type="text" value="Akshat">
+          </div>
+          <div class="flex-1">
+            <label class="field-label">Last name</label>
+            <input class="input" type="text" value="Sharma">
+          </div>
+        </div>
+
+        <div class="mb-14">
+          <label class="field-label">Email address</label>
+          <div class="input-icon-wrap">
+            <input class="input input-error" type="email" value="akshat@gmail.com">
+            <svg class="input-icon" style="left:auto;right:11px" width="14" height="14" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="var(--status-error)" stroke-width="1.2"/><path d="M8 4v5M8 11v1" stroke="var(--status-error)" stroke-width="1.4" stroke-linecap="round"/></svg>
+          </div>
+          <div style="font-size:11px;color:var(--status-error);margin-top:5px">Email already in use</div>
+        </div>
+
+        <div class="mb-14">
+          <label class="field-label">Password</label>
+          <input class="input" type="password" value="••••••••••••" style="border-color:var(--border-strong)">
+          <div class="flex gap-4 mt-6">
+            <div style="flex:1;height:2px;border-radius:1px;background:var(--status-error)"></div>
+            <div style="flex:1;height:2px;border-radius:1px;background:var(--status-warn)"></div>
+            <div style="flex:1;height:2px;border-radius:1px;background:var(--status-success)"></div>
+            <div style="flex:1;height:2px;border-radius:1px;background:var(--status-success)"></div>
+          </div>
+          <div style="font-size:10px;color:var(--status-success);margin-top:4px;font-family:var(--font-mono)">Strong</div>
+        </div>
+
+        <div class="mb-16">
+          <label class="field-label">Confirm password</label>
+          <input class="input" type="password" value="••••••••••••">
+        </div>
+
+        <div class="flex items-start gap-8 mb-20">
+          <div style="width:14px;height:14px;border-radius:3px;background:var(--accent);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center">
+            <svg width="8" height="6" viewBox="0 0 8 6" fill="none"><path d="M1 3l2 2 4-4" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <span style="font-size:11px;color:var(--text-secondary);line-height:1.6">I agree to the <span style="color:var(--text-primary);cursor:pointer;text-decoration:underline;text-underline-offset:2px">Terms of Service</span> and <span style="color:var(--text-primary);cursor:pointer;text-decoration:underline;text-underline-offset:2px">Privacy Policy</span></span>
+        </div>
+
+        <button class="btn btn-primary w-full" style="justify-content:center;margin-bottom:14px">Create account</button>
+        <div class="auth-footer-text">Already have an account? <span class="link">Sign in</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="auth-footnote">
+    <div class="auth-footnote-item"><div class="dot" style="background:var(--status-error)"></div>Error state: red border + icon + message</div>
+    <div class="auth-footnote-item"><div class="dot" style="background:var(--status-success)"></div>Password strength meter (4 segments)</div>
+    <div class="auth-footnote-item"><div class="dot" style="background:var(--accent)"></div>Focus: strong border on active field</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 3: DASHBOARD
+══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-dashboard">
+<div class="dash-body">
+  <nav class="navbar">
+    <div class="logo">Code<span class="logo-dot">.</span>Sage</div>
+    <div class="nav-center">akshat@example.com</div>
+    <div class="nav-right">
+      <div class="avatar">AS</div>
+      <button class="btn btn-ghost">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="dash-inner">
+    <div class="dash-header">
+      <div>
+        <div class="dash-heading">Repositories</div>
+        <div class="dash-subheading">3 repos · last analyzed 2h ago</div>
+      </div>
+      <button class="btn btn-primary" style="gap:6px">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Add repository
+      </button>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total repos</div>
+        <div class="stat-value">3</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Analyses run</div>
+        <div class="stat-value">12</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Running now</div>
+        <div class="stat-value" style="color:var(--status-running)">1</div>
+      </div>
+    </div>
+
+    <div class="repo-list">
+      <!-- Running -->
+      <div class="repo-card">
+        <div class="repo-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--text-tertiary)"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        </div>
+        <div class="repo-info">
+          <div class="repo-name">codesage-backend</div>
+          <div class="repo-url">github.com/akshat/codesage-backend</div>
+        </div>
+        <div class="repo-status">
+          <span class="badge badge-running"><span class="dot-pulse"></span>Running</span>
+          <span class="repo-time">2 min ago</span>
+        </div>
+        <div class="repo-actions">
+          <button class="btn-sm" style="color:var(--status-running);border-color:var(--running-border)">View</button>
+          <button class="btn-sm">Delete</button>
+        </div>
+      </div>
+
+      <!-- Completed -->
+      <div class="repo-card">
+        <div class="repo-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--text-tertiary)"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        </div>
+        <div class="repo-info">
+          <div class="repo-name">ai-service-fastapi</div>
+          <div class="repo-url">github.com/akshat/ai-service-fastapi</div>
+        </div>
+        <div class="repo-status">
+          <span class="badge badge-done">Completed</span>
+          <span class="repo-time">2 hours ago</span>
+        </div>
+        <div class="repo-actions">
+          <button class="btn-sm" style="color:var(--accent);border-color:var(--border-strong)">Analyze</button>
+          <button class="btn-sm">View</button>
+          <button class="btn-sm">Delete</button>
+        </div>
+      </div>
+
+      <!-- Failed -->
+      <div class="repo-card">
+        <div class="repo-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="var(--text-tertiary)"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        </div>
+        <div class="repo-info">
+          <div class="repo-name">react-frontend</div>
+          <div class="repo-url">github.com/akshat/react-frontend</div>
+        </div>
+        <div class="repo-status">
+          <span class="badge badge-fail">Failed</span>
+          <span class="repo-time">Clone timeout</span>
+        </div>
+        <div class="repo-actions">
+          <button class="btn-sm" style="color:var(--status-error);border-color:var(--error-border)">Retry</button>
+          <button class="btn-sm">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Repo Panel -->
+    <div class="add-panel">
+      <div class="add-panel-title">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v9M1.5 6h9" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg>
+        Add new repository
+      </div>
+      <div class="add-panel-grid">
+        <div>
+          <label class="field-label">Repository URL</label>
+          <input class="input input-mono" type="text" placeholder="https://github.com/user/repo">
+        </div>
+        <div>
+          <label class="field-label">Provider</label>
+          <select class="input">
+            <option>GitHub</option>
+            <option>GitLab</option>
+            <option>Bitbucket</option>
+          </select>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <div class="toggle"><div class="toggle-thumb"></div></div>
+        <span class="toggle-label">Private repository</span>
+        <span class="toggle-note">Requires GitHub token</span>
+      </div>
+      <div class="mb-16">
+        <label class="field-label">GitHub access token</label>
+        <input class="input input-mono" type="text" value="ghp_xxxxxxxxxxxx" style="border-color:var(--border-strong)">
+      </div>
+      <div class="add-panel-actions">
+        <button class="btn btn-primary">Add repository</button>
+        <button class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 4: ANALYSIS
+══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-analysis">
+<div style="background:var(--bg-base);min-height:580px">
+  <nav class="navbar">
+    <div class="logo">Code<span class="logo-dot">.</span>Sage</div>
+    <div class="nav-center">
+      <span style="color:var(--text-tertiary)">akshat / </span>codesage-backend
+    </div>
+    <div class="nav-right">
+      <div class="avatar">AS</div>
+      <button class="btn btn-ghost">Sign out</button>
+    </div>
+  </nav>
+
+  <div class="analysis-layout">
+    <!-- Sidebar -->
+    <div class="analysis-sidebar">
+      <div class="sidebar-card">
+        <div class="sidebar-section">
+          <div class="sidebar-section-label">Repository</div>
+          <div class="sidebar-row">
+            <span class="sidebar-key">Name</span>
+            <span class="sidebar-val">codesage-backend</span>
+          </div>
+          <div class="mt-4">
+            <div class="sidebar-section-label">URL</div>
+            <div style="font-size:11px;color:var(--status-info);font-family:var(--font-mono);word-break:break-all;line-height:1.5">github.com/akshat/codesage-backend</div>
+          </div>
+          <div class="sidebar-row mt-8">
+            <span class="sidebar-key">Branch</span>
+            <span class="sidebar-val">main</span>
+          </div>
+        </div>
+        <div class="divider mb-12"></div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-label">Statistics</div>
+          <div class="sidebar-row"><span class="sidebar-key">Files</span><span class="sidebar-val">142</span></div>
+          <div class="sidebar-row mt-4"><span class="sidebar-key">Lines</span><span class="sidebar-val">8,430</span></div>
+          <div class="sidebar-row mt-4"><span class="sidebar-key">Languages</span><span class="sidebar-val">4</span></div>
+        </div>
+        <div class="divider mb-12"></div>
+        <div class="sidebar-section">
+          <div class="sidebar-section-label">Composition</div>
+          <div class="lang-bar-row">
+            <div class="lang-bar-header"><span class="lang-bar-name">JavaScript</span><span class="lang-bar-pct">68%</span></div>
+            <div class="lang-bar-track"><div class="lang-bar-fill" style="width:68%;background:var(--status-warn)"></div></div>
+          </div>
+          <div class="lang-bar-row">
+            <div class="lang-bar-header"><span class="lang-bar-name">Python</span><span class="lang-bar-pct">22%</span></div>
+            <div class="lang-bar-track"><div class="lang-bar-fill" style="width:22%;background:var(--status-info)"></div></div>
+          </div>
+          <div class="lang-bar-row">
+            <div class="lang-bar-header"><span class="lang-bar-name">Other</span><span class="lang-bar-pct">10%</span></div>
+            <div class="lang-bar-track"><div class="lang-bar-fill" style="width:10%;background:var(--text-tertiary)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main -->
+    <div class="analysis-main">
+      <!-- Query form -->
+      <div class="query-card">
+        <div class="query-title">Ask about this codebase</div>
+        <textarea class="input" rows="3" style="resize:none;line-height:1.65">How is authentication implemented? Are there any security vulnerabilities in the JWT flow?</textarea>
+        <div class="query-row">
+          <select class="input" style="flex:1;min-width:140px">
+            <option>Security analysis</option>
+            <option>Architecture overview</option>
+            <option>Performance audit</option>
+            <option>Code summary</option>
+          </select>
+          <button class="btn btn-primary">
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><polygon points="1.5,1 9,5 1.5,9" fill="currentColor"/></svg>
+            Analyze
+          </button>
+        </div>
+      </div>
+
+      <!-- Output -->
+      <div class="query-card">
+        <div class="output-header">
+          <div class="output-title-row">
+            <span class="output-title">Analysis output</span>
+            <span class="badge badge-running"><span class="dot-pulse"></span>Streaming</span>
+          </div>
+          <span class="output-time">2.3s</span>
+        </div>
+        <div class="output-body">
+          The authentication system uses JWT tokens with a dual-token strategy (access + refresh). Here's what I found:<br><br>
+          <span style="color:var(--status-warn);font-weight:600">Security concern:</span> The JWT secret is loaded from <span class="code-chip">process.env.JWT_SECRET</span> without validation — if this env var is missing, the app will sign tokens with <span class="code-chip" style="color:var(--syntax-str)">"undefined"</span> as the key.
+        </div>
+        <div class="code-block mb-14">
+          <div style="font-size:10px;color:var(--text-tertiary);margin-bottom:10px;font-family:var(--font-sans);display:flex;align-items:center;justify-content:space-between">
+            <span>src/utils/generateToken.js</span>
+            <span style="color:var(--status-success)">cited</span>
+          </div>
+          <span class="code-kw">const</span> token = jwt.sign(<br>
+          &nbsp;&nbsp;{ userId: user._id },<br>
+          &nbsp;&nbsp;<span class="code-err">process.env.JWT_SECRET</span>, <span class="code-cmt">// ⚠ add fallback check</span><br>
+          &nbsp;&nbsp;{ expiresIn: <span class="code-str">'15m'</span> }<br>
+          );<span class="typing-cursor"></span>
+        </div>
+        <div style="font-size:13px;color:var(--text-secondary)">
+          Recommended fix: Add a startup check to throw if <span class="code-chip">JWT_SECRET</span> is unset...
+        </div>
+      </div>
+
+      <!-- Citations -->
+      <div class="citations-card">
+        <span class="section-label">Referenced files</span>
+        <div class="file-ref">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="10" height="10" rx="2" stroke="var(--text-tertiary)" stroke-width="1"/><path d="M3 4h6M3 6.5h4" stroke="var(--text-tertiary)" stroke-width="1" stroke-linecap="round"/></svg>
+          <span class="file-ref-name">src/utils/generateToken.js</span>
+          <span class="file-ref-lines" style="color:var(--status-warn)">L14–22</span>
+        </div>
+        <div class="file-ref">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1" y="1" width="10" height="10" rx="2" stroke="var(--text-tertiary)" stroke-width="1"/><path d="M3 4h6M3 6.5h4" stroke="var(--text-tertiary)" stroke-width="1" stroke-linecap="round"/></svg>
+          <span class="file-ref-name">src/middleware/auth.js</span>
+          <span class="file-ref-lines">L5–30</span>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="citations-card">
+        <div class="flex items-center justify-between mb-10">
+          <span class="section-label">Analysis history</span>
+          <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="var(--text-tertiary)" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="history-row">
+          <span class="badge badge-done" style="font-size:9px">Done</span>
+          <span class="history-label">Architecture overview</span>
+          <span class="history-time">2h ago</span>
+        </div>
+        <div class="history-row">
+          <span class="badge badge-fail" style="font-size:9px">Failed</span>
+          <span class="history-label">Performance audit</span>
+          <span class="history-time">1d ago</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 5: RESULT
+══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-result">
+<div style="background:var(--bg-base);min-height:580px">
+  <nav class="navbar">
+    <div class="logo">Code<span class="logo-dot">.</span>Sage</div>
+    <div class="nav-center">Security analysis · codesage-backend</div>
+    <div class="nav-right">
+      <div class="avatar">AS</div>
+      <button class="btn btn-ghost">Sign out</button>
+    </div>
+  </nav>
+
+  <div style="padding:24px 20px">
+    <!-- Result header -->
+    <div class="flex items-start justify-between flex-wrap gap-10 mb-20" style="flex-wrap:wrap">
+      <div>
+        <div class="result-meta">
+          <div class="result-heading">Security analysis</div>
+          <span class="badge badge-done">Completed</span>
+        </div>
+        <div class="result-submeta mt-4">
+          <span>codesage-backend</span>
+          <span class="meta-sep">·</span>
+          <span>April 23, 2026 · 14:32</span>
+          <span class="meta-sep">·</span>
+          <span>2.8s</span>
+        </div>
+      </div>
+      <div class="result-actions">
+        <button class="btn btn-secondary">← Back to dashboard</button>
+        <button class="btn btn-primary">Ask follow-up</button>
+      </div>
+    </div>
+
+    <!-- Score cards -->
+    <div class="score-grid">
+      <div class="score-card">
+        <div class="score-label">Security score</div>
+        <div class="score-value" style="color:var(--status-warn)">6/10</div>
+      </div>
+      <div class="score-card">
+        <div class="score-label">Issues found</div>
+        <div class="score-value" style="color:var(--status-error)">4</div>
+      </div>
+      <div class="score-card">
+        <div class="score-label">Files scanned</div>
+        <div class="score-value">142</div>
+      </div>
+      <div class="score-card">
+        <div class="score-label">Critical</div>
+        <div class="score-value" style="color:var(--status-error)">1</div>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-card">
+      <div class="summary-card-title">Summary</div>
+      <div class="summary-body">The backend has a solid JWT-based auth foundation, but three security issues were found in the token handling layer. The most critical is a missing secret validation at startup. Rate limiting is partially implemented but not applied to sensitive auth endpoints. Password hashing uses bcrypt correctly (12 rounds).</div>
+    </div>
+
+    <!-- Findings -->
+    <div class="summary-card">
+      <div class="summary-card-title">Findings</div>
+      <div class="finding finding-critical">
+        <div class="finding-header">
+          <span class="badge sev-critical">CRITICAL</span>
+          <span class="finding-title">Missing JWT_SECRET validation</span>
+        </div>
+        <div class="finding-desc">App will sign tokens with "undefined" as secret if env var is missing</div>
+        <div class="finding-loc">src/utils/generateToken.js:14</div>
+      </div>
+      <div class="finding finding-high">
+        <div class="finding-header">
+          <span class="badge sev-high">HIGH</span>
+          <span class="finding-title">No rate limiting on /api/auth/login</span>
+        </div>
+        <div class="finding-desc">Auth endpoints are not rate-limited, enabling brute force attacks</div>
+        <div class="finding-loc">src/modules/auth/auth.routes.js:8</div>
+      </div>
+      <div class="finding finding-low">
+        <div class="finding-header">
+          <span class="badge sev-low">LOW</span>
+          <span class="finding-title">CORS allows all origins in development</span>
+        </div>
+        <div class="finding-desc">Ensure CORS is restricted by environment in production builds</div>
+        <div class="finding-loc">src/app.js:12</div>
+      </div>
+    </div>
+
+    <!-- Follow-up -->
+    <div class="followup-card">
+      <input class="input flex-1" placeholder="Ask a follow-up question about this analysis..." style="min-width:200px">
+      <button class="btn btn-primary" style="white-space:nowrap">Ask follow-up</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     PAGE 6: DESIGN SYSTEM
+══════════════════════════════════════════════════════════════ -->
+<div class="page" id="page-components">
+<div class="ds-body">
+  <div class="ds-heading">Design system — CodeSage</div>
+  <div class="ds-grid">
+
+    <!-- Colors -->
+    <div class="ds-col">
+      <span class="ds-section-title">Color palette</span>
+      <div class="color-swatch"><div class="swatch" style="background:#000"></div><span class="swatch-label">#000000 — bg base</span></div>
+      <div class="color-swatch"><div class="swatch" style="background:#0c0c0c"></div><span class="swatch-label">#0c0c0c — bg raised</span></div>
+      <div class="color-swatch"><div class="swatch" style="background:#141414"></div><span class="swatch-label">#141414 — bg overlay</span></div>
+      <div class="color-swatch"><div class="swatch" style="background:#1a1a1a"></div><span class="swatch-label">#1a1a1a — bg subtle</span></div>
+      <div class="color-swatch"><div class="swatch" style="background:#e8ff6b"></div><span class="swatch-label">#e8ff6b — accent</span></div>
+      <div class="color-swatch"><div class="swatch" style="background:#f0f0f0"></div><span class="swatch-label">#f0f0f0 — text primary</span></div>
+      <div class="color-swatch"><div class="swatch" style="background:#888"></div><span class="swatch-label">#888888 — text secondary</span></div>
+      <div class="color-swatch mt-8"><div class="swatch" style="background:#4ade80"></div><span class="swatch-label">#4ade80 — success</span></div>
+      <div class="color-swatch"><div class="swatch" style="background:#fb923c"></div><span class="swatch-label">#fb923c — warning</span></div>
+      <div class="color-swatch"><div class="swatch" style="background:#f87171"></div><span class="swatch-label">#f87171 — error</span></div>
+      <div class="color-swatch"><div class="swatch" style="background:#a78bfa"></div><span class="swatch-label">#a78bfa — running</span></div>
+    </div>
+
+    <!-- Typography -->
+    <div class="ds-col">
+      <span class="ds-section-title">Typography scale</span>
+      <div class="type-scale">
+        <div class="t-display">CodeSage.</div>
+        <div class="t-h1">Page heading — 17/600</div>
+        <div class="t-h2">Section title — 13/600</div>
+        <div class="t-body">Body text — 13/400 · Geist</div>
+        <div class="t-secondary">Secondary — 12/400</div>
+        <div class="t-caption">Caption — 11/400</div>
+        <div class="t-label">Label — 10/mono/uppercase</div>
+        <div class="t-code">code() → JetBrains Mono 12px</div>
+      </div>
+    </div>
+
+    <!-- Components -->
+    <div class="ds-col">
+      <span class="ds-section-title">Buttons</span>
+      <div class="btn-showcase">
+        <button class="btn btn-primary" style="width:fit-content">Primary action</button>
+        <button class="btn btn-secondary">Secondary / outline</button>
+        <button class="btn btn-ghost" style="width:fit-content">Ghost / danger</button>
+        <button class="btn-sm" style="width:fit-content">Small action</button>
+        <button class="btn btn-primary" style="opacity:.35;cursor:not-allowed;width:fit-content" disabled>Disabled</button>
+      </div>
+
+      <span class="ds-section-title">Status badges</span>
+      <div class="badge-showcase">
+        <span class="badge badge-pending">Pending</span>
+        <span class="badge badge-running"><span class="dot-pulse"></span>Running</span>
+        <span class="badge badge-done">Completed</span>
+        <span class="badge badge-fail">Failed</span>
+      </div>
+
+      <span class="ds-section-title">Severity badges</span>
+      <div class="badge-showcase">
+        <span class="badge sev-critical">CRITICAL</span>
+        <span class="badge sev-high">HIGH</span>
+        <span class="badge sev-medium">MEDIUM</span>
+        <span class="badge sev-low">LOW</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider mt-20 mb-20"></div>
+
+  <div class="ds-grid">
+    <!-- Inputs -->
+    <div class="ds-col">
+      <span class="ds-section-title">Form elements</span>
+      <div class="mb-10">
+        <label class="field-label">Default input</label>
+        <input class="input" placeholder="Placeholder text">
+      </div>
+      <div class="mb-10">
+        <label class="field-label">Focused (accent ring)</label>
+        <input class="input" value="Active field value" style="border-color:var(--border-strong);box-shadow:0 0 0 3px var(--accent-dim)">
+      </div>
+      <div class="mb-10">
+        <label class="field-label">Error state</label>
+        <input class="input input-error" value="Invalid value">
+        <div style="font-size:11px;color:var(--status-error);margin-top:5px">This field is required</div>
+      </div>
+      <div>
+        <label class="field-label">Monospace / token</label>
+        <input class="input input-mono" value="ghp_xxxxxxxxxxxxxxxxxxx">
+      </div>
+    </div>
+
+    <!-- Toasts -->
+    <div class="ds-col">
+      <span class="ds-section-title">Toast notifications</span>
+      <div class="toast toast-success">
+        <div class="toast-dot" style="background:var(--status-success)"></div>
+        <span class="toast-msg">Repository added successfully</span>
+        <span class="toast-close">×</span>
+      </div>
+      <div class="toast toast-error">
+        <div class="toast-dot" style="background:var(--status-error)"></div>
+        <span class="toast-msg">Analysis failed — clone timeout</span>
+        <span class="toast-close">×</span>
+      </div>
+      <div class="toast toast-warn">
+        <div class="toast-dot" style="background:var(--status-warn)"></div>
+        <span class="toast-msg">Job queued — position #3</span>
+        <span class="toast-close">×</span>
+      </div>
+
+      <span class="ds-section-title mt-16" style="display:block">Accessibility</span>
+      <div class="a11y-item"><span style="color:var(--status-success)">✓</span> Text on #000: contrast ≥ 7:1 (AAA)</div>
+      <div class="a11y-item"><span style="color:var(--status-success)">✓</span> Accent on dark bg: 10:1+ (AAA)</div>
+      <div class="a11y-item"><span style="color:var(--status-success)">✓</span> Focus rings on all interactive elements</div>
+      <div class="a11y-item"><span style="color:var(--status-success)">✓</span> Min touch target 44×44px</div>
+      <div class="a11y-item"><span style="color:var(--status-warn)">~</span> Running: color + pulse + text label</div>
+      <div class="a11y-item"><span style="color:var(--status-success)">✓</span> Errors paired with icons + text</div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.pg-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('page-' + id).classList.add('on');
+  event.target.classList.add('on');
+  window.scrollTo(0, 0);
+}
+
+let isLight = false;
+function toggleTheme() {
+  isLight = !isLight;
+  document.body.classList.toggle('light', isLight);
+  document.getElementById('themeToggle').innerHTML = isLight
+    ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg> Dark mode`
+    : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> Light mode`;
+}
+</script>
+</body>
+</html>

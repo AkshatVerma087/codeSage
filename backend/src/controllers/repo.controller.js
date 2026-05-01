@@ -131,4 +131,38 @@ async function deleteRepo(req, res){
     }
 }
 
+async function rerunRepo(req, res) {
+    try{
+        const {repoId} = req.params;
+        const ownerUserId = req.user.id;
+
+        if(!repoId.match(/^[0-9a-fA-F]{24}$/)){
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid repository ID format'
+            })
+        }
+
+        const repo = await Repo.findOne({ _id: repoId, ownerUserId });
+        if (!repo) {
+            return res.status(404).json({
+                success: false,
+                message: 'Repository not found'
+            });
+        }
+
+        // NOTE: This is a placeholder implementation. In the full system,
+        // this would enqueue a job or trigger the analysis pipeline.
+        // For now, we return success to indicate the run was started.
+        return res.status(200).json({
+            success: true,
+            message: 'Analysis run started',
+            repoId: repoId
+        });
+    } catch (error) {
+        console.error('Error starting rerun:', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}
+
 module.exports = { createRepo, getRepos, getRepoById, deleteRepo };

@@ -7,6 +7,7 @@ const { authMiddleware } = require('../middlewares/auth.middleware');
 router.post('/create', authMiddleware, RepoController.createRepo);
 router.get('/', authMiddleware, RepoController.getRepos);
 router.get('/:repoId', authMiddleware, RepoController.getRepoById);
+router.post('/:repoId/rerun', authMiddleware, RepoController.rerunRepo);
 router.delete('/:repoId', authMiddleware, RepoController.deleteRepo);
 
 module.exports = router;
