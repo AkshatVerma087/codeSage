@@ -5,5 +5,6 @@ const {authMiddleware: verifyToken} = require('../middlewares/auth.middleware');
 
 
 router.post('/analyze', verifyToken, jobController.triggerAnalysis);
+router.get('/:jobId', verifyToken, jobController.getJobById);
 
 module.exports = router;

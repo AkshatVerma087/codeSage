@@ -165,4 +165,4 @@ async function rerunRepo(req, res) {
     }
 }
 
-module.exports = { createRepo, getRepos, getRepoById, deleteRepo };
+module.exports = { createRepo, getRepos, getRepoById, deleteRepo, rerunRepo };
