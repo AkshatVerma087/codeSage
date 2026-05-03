@@ -1,0 +1,25 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.config import settings
+
+app = FastAPI(
+    title="AI Service",
+    version="0.1.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5713"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True
+)
+
+@app.get("/health")
+def health_check():
+    return {
+        "status": "ok",
+        "message": "AI Service is running"
+    }
+
