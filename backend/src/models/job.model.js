@@ -56,7 +56,6 @@ const jobSchema = new mongoose.Schema({
     idempotencyKey: {
         type: String,
         required: false,
-        default: null,
         unique: true,
         sparse: true,
     },

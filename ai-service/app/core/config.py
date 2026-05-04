@@ -2,6 +2,9 @@ from pydantic_settings import BaseSettings
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 from functools import lru_cache
+from pathlib import Path
+
+ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
 
 class Settings(BaseSettings):
     llm_api_key: str = Field(..., alias="LLM_API_KEY")
@@ -11,7 +14,7 @@ class Settings(BaseSettings):
     clone_timeout_sec: int = Field(120, alias="CLONE_TIMEOUT_SEC")
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(ENV_FILE),
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",

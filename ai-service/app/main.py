@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 
+
+from app.api.routes import router as api_router
+
 app = FastAPI(
     title="AI Service",
     version="0.1.0"
@@ -15,6 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
     allow_credentials=True
 )
+
+
+app.include_router(api_router)
 
 @app.get("/health")
 def health_check():

@@ -5,6 +5,7 @@ async function triggerAnalysis(req, res) {
     try{
         const ownerUserId = req.user.id;
         const {repoId, idempotencyKey, correlationId} = req.body;
+        const resolvedCorrelationId = correlationId || req.correlationId || null;
 
         if(!repoId) {
             return res.status(400).json({error: 'repoId is required'});
@@ -26,15 +27,20 @@ async function triggerAnalysis(req, res) {
             }
         }
 
-        const job = await Job.create({
+        const jobPayload = {
             ownerUserId,
             repoId,
             type: 'build',
             status: 'pending',
             attempts: 0,
-            idempotencyKey: idempotencyKey || null,
-            correlationId: correlationId || null,
-        });
+            correlationId: resolvedCorrelationId,
+        };
+
+        if (idempotencyKey) {
+            jobPayload.idempotencyKey = idempotencyKey;
+        }
+
+        const job = await Job.create(jobPayload);
 
         const queued = await analysisQueue.add(
             'analysis',
@@ -42,7 +48,7 @@ async function triggerAnalysis(req, res) {
                 jobId: job._id.toString(),
                 ownerUserId,
                 repoId,
-                correlationId: job.correlationId,
+                correlationId: resolvedCorrelationId,
             },
             {
                 removeOnComplete: true,
@@ -58,6 +64,7 @@ async function triggerAnalysis(req, res) {
             jobId: job._id,
             queueJobId: job.queueJobId,
             status: job.status,
+            correlationId: job.correlationId,
             startedAt: job.startedAt,
             completedAt: job.completedAt,
         });

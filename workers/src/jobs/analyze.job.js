@@ -1,6 +1,7 @@
 const { processAnalysis } = require('../processors/analysis.processor');
 const Job = require('../models/job.model');
 const logger = require('../utils/logger');
+const util = require('util');
 
 async function process(job) {
     const dbJobId = job.data?.jobId ?? null;
@@ -27,15 +28,25 @@ async function process(job) {
         logger.info('processing finished', { ...meta, result });
         return result;
     } catch (err) {
+        const errorMessage = err && err.message ? err.message : String(err);
+        const errorStack = err && err.stack ? err.stack : null;
+
         if (dbJobId) {
             await Job.findByIdAndUpdate(dbJobId, {
                 status: 'failed',
                 completedAt: new Date(),
-                errorMessage: err.message,
+                errorMessage,
+                errorStack,
             });
         }
 
-        logger.error('processing failed', { ...meta, errorMessage: err.message });
+        logger.error('processing failed', {
+            ...meta,
+            errorMessage,
+            errorStack,
+            errorObject: util.inspect(err, { depth: 2 }),
+        });
+
         throw err;
     }
 }

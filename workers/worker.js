@@ -1,4 +1,5 @@
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 const { Worker } = require('bullmq');
 const connection = require('./src/queue/connections');
 const analyzeJob = require('./src/jobs/analyze.job');
@@ -6,7 +7,7 @@ const logger = require('./src/utils/logger');
 const mongoose = require('mongoose');
 
 
-mongoose.connect(process.env.MONGO_URI, { keepAlive: true })
+mongoose.connect(process.env.MONGO_URI)
     .then(() => logger.info('mongo connected'))
     .catch((err) => logger.error('mongo connection failed', { errorMessage: err.message }));
 
@@ -31,11 +32,15 @@ const worker = new Worker(
     { connection }
 );
 
+const util = require('util');
+
 worker.on('failed', (job, err) => {
-    logger.info('job failed ', {
-        jobId: job?.id,
-        correlationId: job?.data?.correlationId,
-        errorMessage: err.message
+    logger.error('job failed', {
+        jobId: job?.id ?? null,
+        correlationId: job?.data?.correlationId ?? null,
+        errorMessage: err && err.message ? err.message : String(err),
+        errorStack: err && err.stack ? err.stack : null,
+        errorObject: util.inspect(err, { depth: 2 }),
     });
 });
 

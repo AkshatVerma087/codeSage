@@ -3,7 +3,8 @@ function log(level, message, meta = {}){
         timestamp: new Date().toISOString(),
         service: 'worker',
         level,
-        jobId: meta.jobId || null,
+        message,
+        jobId: meta.jobId || meta.dbJobId || meta.queueJobId || null,
         correlationId: meta.correlationId || null,
         ...meta,
     };
