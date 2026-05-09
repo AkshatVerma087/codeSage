@@ -220,12 +220,286 @@ codeSage/
 │       ├── services/                  # aiClient.js (HTTP to AI service)
 │       └── utils/                     # Structured logger
 │
-├── docs/
-│   └── ARCHITECTURE.md                # Detailed file-by-file documentation
 └── README.md
 ```
 
-> 📖 **For detailed file-by-file documentation**, see **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**
+---
+
+## Detailed File-by-File Reference
+
+### Backend API Service — `backend/`
+
+<details>
+<summary><strong>📌 Entry Points</strong></summary>
+
+| File | Description |
+|------|-------------|
+| `server.js` | Loads environment, connects to MongoDB via Mongoose, starts Express on `PORT` (default 5000) |
+| `src/app.js` | Express app configuration — CORS, JSON body parsing, cookie-parser, correlation ID middleware, mounts all route groups under `/api/auth`, `/api/repos`, `/api/jobs` |
+
+</details>
+
+<details>
+<summary><strong>📦 Models</strong> — <code>src/models/</code></summary>
+
+| File | Schema | Key Fields |
+|------|--------|------------|
+| `auth.model.js` | **User** | `username`, `email`, `password` (bcrypt hashed), `refreshToken`, timestamps |
+| `repo.model.js` | **Repository** | `ownerUserId` (ref → User), `provider` (github/gitlab), `url`, `defaultBranch`, `visibilityHint` (public/private), `credentialRef`, timestamps |
+| `job.model.js` | **Job** | `ownerUserId`, `repoId` (ref → Repo), `type` (analysis), `status` (pending → running → success → failed), `attempts`, `queueJobId`, `correlationId`, `idempotencyKey`, `errorMessage`, `errorCode`, timestamps |
+
+</details>
+
+<details>
+<summary><strong>🎮 Controllers</strong> — <code>src/controllers/</code></summary>
+
+| File | Endpoints | What It Does |
+|------|-----------|-------------|
+| `auth.controller.js` | `register`, `login`, `refresh`, `logout` | Hashes passwords with bcrypt. Generates dual JWT tokens: short-lived access token (15min) + long-lived refresh token (7 days). Stores tokens in httpOnly secure cookies. Supports token rotation on refresh. Nullifies refresh token on logout. |
+| `repo.controller.js` | `create`, `list`, `getById`, `delete`, `rerun` | Full CRUD with ownership validation (checks `ownerUserId` matches JWT user). Input validation for required fields. Duplicate URL checking. Delete cascade. `rerun` is currently a placeholder. |
+| `job.controller.js` | `triggerAnalysis`, `getStatus` | Creates a Job document in MongoDB with status `pending`, then enqueues an `analysis` job into BullMQ/Redis. Supports `idempotencyKey` to prevent duplicate submissions. Returns queueJobId for tracking. |
+
+</details>
+
+<details>
+<summary><strong>🛡️ Middlewares & Queue</strong> — <code>src/middlewares/</code>, <code>src/queue/</code></summary>
+
+| File | What It Does |
+|------|-------------|
+| `auth.middleware.js` | **JWT verification** — extracts token from httpOnly cookies or `Authorization: Bearer` header. Verifies with `jsonwebtoken`. Attaches `req.user`. Also contains **input validation** for register/login payloads. |
+| `correlation.middleware.js` | **Distributed tracing** — generates UUID `X-Correlation-Id` per request. Attaches to `req.correlationId` and response header. |
+| `queue/connection.js` | IORedis connection from `REDIS_URL`. Shared by Queue and Worker. |
+| `queue/analysisQueue.js` | BullMQ `Queue` named `"analysis"`. Used by `job.controller.js` to enqueue jobs. |
+
+</details>
+
+### Frontend Application — `frontend/`
+
+<details>
+<summary><strong>📌 Entry Points & State</strong></summary>
+
+| File | Description |
+|------|-------------|
+| `src/main.jsx` | React root render — mounts `<App />` into DOM |
+| `src/App.jsx` | Wraps app in `AuthProvider` context + `RouterProvider` for React Router |
+| `src/app.routes.jsx` | Route definitions — Login, Register, Dashboard, Analysis, ResultPage, About, RepoPage |
+| `src/context/AuthContext.jsx` | **Central state manager** — provides `user`, `axiosInstance` (baseURL: localhost:5000, withCredentials: true), `darkMode` toggle |
+| `src/hooks/useAuth.js` | Custom hook: `login()`, `register()`, `logout()` — wraps API calls + updates context |
+
+</details>
+
+<details>
+<summary><strong>🧱 Components</strong> — <code>src/components/</code></summary>
+
+| File | What It Does |
+|------|-------------|
+| `Navbar.jsx` | Navigation bar with Dashboard/Analysis/About links, auth-aware buttons, theme toggle |
+| `Layout.jsx` | Page wrapper — `<Navbar />` + `<Outlet>` |
+| `ProtectedRoute.jsx` | Route guard — redirects to `/login` if unauthenticated, has `devMode` bypass |
+
+</details>
+
+<details>
+<summary><strong>📄 Pages</strong> — <code>src/pages/</code></summary>
+
+| File | What It Does |
+|------|-------------|
+| `Dashboard.jsx` | **Main hub** — fetches repos, stat cards, search/filter, "Add Repository" form, repo cards with View/Rerun/Delete. Falls back to sample data. |
+| `Login.jsx` | Login form with glassmorphism styling. **Note:** inputs currently uncontrolled. |
+| `Register.jsx` | Registration form with username, email, password, confirm password + validation |
+| `Analysis.jsx` | **Full mockup** — sidebar with repo stats, query textarea, streaming output, code citations, analysis history. **All hardcoded demo data.** |
+| `ResultPage.jsx` | Displays analysis results with formatted output |
+| `RepoPage.jsx` | Single repo detail page (placeholder) |
+| `About.jsx` | Platform description, features, tech stack |
+
+</details>
+
+### AI Service — `ai-service/`
+
+<details>
+<summary><strong>📌 Entry Points</strong></summary>
+
+| File | Description |
+|------|-------------|
+| `app/main.py` | FastAPI app — Redis async client in lifespan, CORS, registers `health`, `indexing`, `query` routers |
+| `app/celery_app.py` | Celery config — Redis broker + result backend, JSON serialization, 1-hour timeout, late ack, auto-discovers `app/tasks/` |
+
+</details>
+
+<details>
+<summary><strong>🌐 API Endpoints</strong> — <code>app/api/</code></summary>
+
+| File | Endpoints | What It Does |
+|------|-----------|-------------|
+| `health.py` | `GET /health` | Redis ping, Qdrant status, LLM model existence, timestamp |
+| `indexing.py` | `POST /v1/index`, `GET /v1/index/{job_id}/status`, `DELETE /v1/index/{job_id}` | Submit indexing (acquires repo lock → Celery task), poll progress, cancel job. API key + rate limited. |
+| `query.py` | `POST /v1/query` | RAG query: embed question → Qdrant top-k search → LLM generates answer. Returns answer + sources + latency. |
+| `routes.py` | `POST /analyze`, `POST /generate` | Legacy endpoints (not registered). Synchronous indexing + direct LLM generation. |
+
+</details>
+
+<details>
+<summary><strong>⚙️ Core</strong> — <code>app/core/</code></summary>
+
+| File | What It Does |
+|------|-------------|
+| `config.py` | Pydantic `BaseSettings` — Redis, Qdrant, embeddings, LLM, security, repo constraints config from `.env` |
+| `logger.py` | Structured JSON logging — `{timestamp, service, level, message, correlation_id, job_id}` |
+| `redis_utils.py` | Async helpers: `set_job_state()`, `get_job_state()`, `set_job_progress()`, `cache_json()`, `acquire_repo_lock()`, `release_repo_lock()` |
+| `security.py` | API key verification (constant-time), rate limiting (Redis INCR), repo locking (SET NX), cache utils |
+
+</details>
+
+<details>
+<summary><strong>🔍 RAG Parser</strong> — <code>app/rag/parser/</code></summary>
+
+| File | What It Does |
+|------|-------------|
+| `repo_loader.py` | **RepoLoader** — GitPython shallow clone, token auth for private repos, timeout + size limits (100MB), cleanup |
+| `tree_sitter_parser.py` | **TreeSitterParser** — walks directory, filters `.py/.js/.ts/.go/.java`, skips hidden/node_modules/venv, delegates to Chunker |
+| `chunker.py` | **Chunker** — regex boundary detection for functions/classes across 5 languages, 60-line windows with 12-line overlap, produces `ChunkWindow` dataclasses |
+| `parser.py` | Base parser interface |
+
+</details>
+
+<details>
+<summary><strong>📐 RAG Embeddings</strong> — <code>app/rag/embeddings/</code></summary>
+
+| File | What It Does |
+|------|-------------|
+| `encoder.py` | **Encoder** (singleton) — loads `BAAI/bge-base-en-v1.5`, 768-dim vectors, batch encode with normalization, code/query prefix prompts |
+| `embedder.py` | **Embedder** — wrapper with `encode()`, `encode_chunks()`, `similarity()`, exposes `embedding_dim` |
+| `vector_store.py` | **VectorStore** — async/sync Qdrant interface. Sync methods use `_run_sync()` for nested event loop safety |
+| `qdrant_adapter.py` | **QdrantAdapter** — creates collections (cosine distance), UUID5 point IDs, rich payload storage, configurable top-k search |
+
+</details>
+
+<details>
+<summary><strong>🤖 LLM & Tasks</strong> — <code>app/llm/</code>, <code>app/tasks/</code></summary>
+
+| File | What It Does |
+|------|-------------|
+| `llm/generator.py` | **LLMGenerator** (singleton) — lazy-loads GGUF model via `llama-cpp-python`, builds context-aware prompts, chat completion with fallback |
+| `llm/client.py` | **LLMClient** — validates backend selection (`local`/`llama-cpp`/`gguf`), delegates to generator |
+| `tasks/indexing.py` | **Celery task** — full indexing pipeline with progress: cloning(5%) → parsing(20%) → encoding(50%) → upserting(80-99%) → completed(100%). Failure handling + repo lock release |
+| `rag/pipeline/pipeline.py` | **RAGPipeline** — orchestrates clone → parse → embed → upsert, returns stats, handles cleanup |
+
+</details>
+
+### Worker Service — `workers/`
+
+<details>
+<summary><strong>📋 All Files</strong></summary>
+
+| File | What It Does |
+|------|-------------|
+| `worker.js` | Entry point — connects MongoDB, BullMQ Worker on `"analysis"` queue |
+| `src/jobs/analyze.job.js` | Job handler — marks Job as `running`, calls processor, marks `success`/`failed` |
+| `src/processors/analysis.processor.js` | Calls `aiClient.analyze()`, streams response, returns results |
+| `src/services/aiClient.js` | Axios client to AI service `/analyze` endpoint with correlation ID |
+| `src/queue/connection.js` | IORedis connection for BullMQ |
+| `src/models/job.model.js` | Shared Job Mongoose schema |
+| `src/utils/logger.js` | Structured logger with correlation ID |
+
+</details>
+
+---
+
+## Data Flow Diagrams
+
+### Authentication Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend
+    participant DB as MongoDB
+
+    U->>F: Enter email + password
+    F->>B: POST /api/auth/login
+    B->>DB: Find user by email
+    DB-->>B: User document
+    B->>B: bcrypt.compare(password, hash)
+    B->>B: Sign JWT access (15m) + refresh (7d)
+    B->>DB: Store refreshToken
+    B-->>F: Set httpOnly cookies
+    F-->>U: Redirect to Dashboard
+```
+
+### Job Analysis Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant F as Frontend
+    participant B as Backend API
+    participant Q as BullMQ/Redis
+    participant W as Worker
+    participant AI as AI Service
+    participant C as Celery
+    participant QD as Qdrant
+
+    U->>F: Click Analyze
+    F->>B: POST /api/jobs/analyze
+    B->>B: Create Job status pending
+    B->>Q: Enqueue analysis job
+    B-->>F: 201 jobId
+
+    Q->>W: Worker picks up job
+    W->>W: Mark Job as running
+    W->>AI: POST /v1/index
+    AI->>AI: Acquire repo lock
+    AI->>C: Dispatch Celery task
+
+    C->>C: Clone repo
+    C->>C: Parse code
+    C->>C: Generate embeddings
+    C->>QD: Upsert vectors
+    C->>AI: Task complete
+
+    AI-->>W: 202 job_id status
+    W->>W: Mark Job as success
+```
+
+### RAG Query Flow
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant AI as AI Service
+    participant E as Embedder
+    participant QD as Qdrant
+    participant LLM as Local LLM
+
+    U->>AI: POST /v1/query
+    AI->>E: Encode question
+    E-->>AI: Query vector 768-dim
+    AI->>QD: Search top-k similar chunks
+    QD-->>AI: Scored code chunks
+    AI->>AI: Assemble context from chunks
+    AI->>LLM: Generate answer
+    LLM-->>AI: Generated text
+    AI-->>U: answer + sources + latency
+```
+
+### Indexing Progress Stages
+
+```mermaid
+graph LR
+    A["queued 0%"] --> B["cloning 5%"]
+    B --> C["parsing 20%"]
+    C --> D["encoding 50%"]
+    D --> E["upserting 80-99%"]
+    E --> F["completed 100%"]
+
+    style A fill:#6366f1,color:#fff
+    style B fill:#8b5cf6,color:#fff
+    style C fill:#a78bfa,color:#fff
+    style D fill:#c4b5fd,color:#000
+    style E fill:#ddd6fe,color:#000
+    style F fill:#10b981,color:#fff
+```
 
 ---
 
